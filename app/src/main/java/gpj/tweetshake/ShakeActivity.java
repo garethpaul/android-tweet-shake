@@ -9,9 +9,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+
 public class ShakeActivity extends Activity implements SensorEventListener {
 
     private SensorManager sensorManager;
+    private long lastUpdate;
+    public TweetComposer.Builder builder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +26,28 @@ public class ShakeActivity extends Activity implements SensorEventListener {
                 SensorManager.SENSOR_DELAY_NORMAL);
 
     }
+
+    private void checkShake(SensorEvent event) {
+
+        // Movement
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        float accelationSquareRoot = (x * x + y * y + z * z)
+                / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
+        long actualTime = System.currentTimeMillis();
+        if (accelationSquareRoot >= 2) //
+        {
+            if (actualTime - lastUpdate < 200) {
+                return;
+            }
+            builder = new TweetComposer.Builder(this)
+                    .text("I just shook my phone");
+            builder.show();
+        }
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -47,7 +73,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-
+        checkShake(event);
     }
 
     @Override
