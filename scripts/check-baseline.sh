@@ -9,6 +9,23 @@ SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
+LINT_XML="$ROOT_DIR/app/lint.xml"
+COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
+STRINGS="$ROOT_DIR/app/src/main/res/values/strings.xml"
+STYLES="$ROOT_DIR/app/src/main/res/values/styles.xml"
+STYLES_V21="$ROOT_DIR/app/src/main/res/values-v21/styles.xml"
+ACTIVITY_LAYOUT="$ROOT_DIR/app/src/main/res/layout/activity_main.xml"
+SHAKE_LAYOUT="$ROOT_DIR/app/src/main/res/layout/shake_main.xml"
+
+if [ ! -f "$ROOT_DIR/CHANGES.md" ]; then
+  printf '%s\n' "CHANGES.md must document repository maintenance." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Android Tweet Shake Changes" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "CHANGES.md must identify the project." >&2
+  exit 1
+fi
 
 if ! grep -Fq "url 'https://repo1.maven.org/maven2'" "$ROOT_BUILD"; then
   printf '%s\n' "Root build must use HTTPS Maven Central." >&2
@@ -37,6 +54,21 @@ fi
 
 if ! grep -Fq 'buildToolsVersion "24.0.3"' "$APP_BUILD"; then
   printf '%s\n' "Android build-tools must stay pinned to 24.0.3 for 64-bit aapt." >&2
+  exit 1
+fi
+
+if [ ! -f "$LINT_XML" ]; then
+  printf '%s\n' "Legacy lint configuration must be tracked." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<issue id="LintError" severity="ignore" />' "$LINT_XML"; then
+  printf '%s\n' "The legacy lint API-database runner error should be suppressed." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<issue id="IconMissingDensityFolder" severity="ignore" />' "$LINT_XML"; then
+  printf '%s\n' "The nodpi logo density-folder warning should be suppressed." >&2
   exit 1
 fi
 
@@ -90,6 +122,23 @@ if ! grep -Fq "allowsShakeAfterCooldown" "$SHAKE_DETECTOR_TEST"; then
   exit 1
 fi
 
+if ! grep -Fq 'android:allowBackup="false"' "$MANIFEST"; then
+  printf '%s\n' "The app must not opt into Android backup by default." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'android:theme="@style/AppTheme"' "$MANIFEST"; then
+  printf '%s\n' "The manifest must use the tracked app theme." >&2
+  exit 1
+fi
+
+USES_PERMISSION_LINE=$(grep -n '<uses-permission android:name="android.permission.INTERNET"' "$MANIFEST" | cut -d: -f1)
+APPLICATION_LINE=$(grep -n '<application' "$MANIFEST" | head -n 1 | cut -d: -f1)
+if [ -z "$USES_PERMISSION_LINE" ] || [ -z "$APPLICATION_LINE" ] || [ "$USES_PERMISSION_LINE" -gt "$APPLICATION_LINE" ]; then
+  printf '%s\n' "Internet permission must be declared before the application element." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'private static final String TWITTER_KEY = "";' "$MAIN_ACTIVITY"; then
   printf '%s\n' "Committed Twitter key placeholder must stay empty." >&2
   exit 1
@@ -105,6 +154,56 @@ if ! grep -Fq 'android:value=""' "$MANIFEST"; then
   exit 1
 fi
 
+if [ ! -f "$ROOT_DIR/app/src/main/res/drawable-nodpi/logo.png" ]; then
+  printf '%s\n' "The legacy bitmap logo must stay in drawable-nodpi." >&2
+  exit 1
+fi
+
+if [ -f "$ROOT_DIR/app/src/main/res/drawable/logo.png" ]; then
+  printf '%s\n' "Bitmap logo must not be tracked in densityless drawable/." >&2
+  exit 1
+fi
+
+if grep -Fq 'android:background="#31AA39"' "$ACTIVITY_LAYOUT" "$SHAKE_LAYOUT"; then
+  printf '%s\n' "Screen background must be provided by the app theme to avoid overdraw." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<color name="tweet_shake_background">#31AA39</color>' "$COLORS"; then
+  printf '%s\n' "Tweet Shake background color must stay in resources." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<item name="android:windowBackground">@color/tweet_shake_background</item>' "$STYLES"; then
+  printf '%s\n' "Base theme must provide the Tweet Shake background." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<item name="android:windowBackground">@color/tweet_shake_background</item>' "$STYLES_V21"; then
+  printf '%s\n' "API 21 theme must provide the Tweet Shake background." >&2
+  exit 1
+fi
+
+if grep -Fq "Hello world!" "$STRINGS"; then
+  printf '%s\n' "Starter template hello_world string must not be tracked." >&2
+  exit 1
+fi
+
+if grep -Fq 'android:text="Shake to Tweet"' "$SHAKE_LAYOUT"; then
+  printf '%s\n' "Shake screen title must use a string resource." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'android:text="@string/shake_to_tweet_title"' "$SHAKE_LAYOUT"; then
+  printf '%s\n' "Shake screen title string resource must be wired into the layout." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'android:contentDescription="@string/tweet_shake_logo_description"' "$SHAKE_LAYOUT"; then
+  printf '%s\n' "Shake logo must have an accessibility description." >&2
+  exit 1
+fi
+
 if git -C "$ROOT_DIR" ls-files '.idea/*' '*.iml' | grep -q .; then
   printf '%s\n' "Generated IDE metadata must not be tracked." >&2
   exit 1
@@ -112,6 +211,26 @@ fi
 
 if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must document the baseline check." >&2
+  exit 1
+fi
+
+if ! grep -Fq "./gradlew lint --no-daemon" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the lint gate." >&2
+  exit 1
+fi
+
+if ! grep -Fq "./gradlew test --no-daemon" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the unit test gate." >&2
+  exit 1
+fi
+
+if ! grep -Fq "./gradlew assembleDebug --no-daemon" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the debug assemble gate." >&2
+  exit 1
+fi
+
+if ! grep -Fq "CHANGES.md" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must point to CHANGES.md." >&2
   exit 1
 fi
 

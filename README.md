@@ -39,9 +39,9 @@ scripts/check-baseline.sh
 Then run Gradle after Android SDK configuration is available:
 
 ```sh
-ANDROID_HOME=/home/gjones/android-sdk ./gradlew tasks --no-daemon
-ANDROID_HOME=/home/gjones/android-sdk ./gradlew assembleDebug --no-daemon
+ANDROID_HOME=/home/gjones/android-sdk ./gradlew lint --no-daemon
 ANDROID_HOME=/home/gjones/android-sdk ./gradlew test --no-daemon
+ANDROID_HOME=/home/gjones/android-sdk ./gradlew assembleDebug --no-daemon
 ```
 
 ## Credential Policy
@@ -53,8 +53,11 @@ tokens, signing files, and machine-local Fabric properties belong outside Git.
 
 The current baseline initializes and unregisters the accelerometer listener
 through the activity lifecycle, tests the shake threshold/debounce logic in a
-small detector, pins compatible legacy build tooling, disables Crashlytics
-processing for empty-key local builds, and removes generated IDE metadata from
-version control. Future work should replace Fabric/Twitter Kit with maintained
-APIs if the app is revived, add hardware or emulator verification for shake
-behavior, and modernize SDK/dependency levels in a dedicated pass.
+small detector, keeps the resource lint gate clean, pins compatible legacy build
+tooling, disables Crashlytics processing for empty-key local builds, and removes
+generated IDE metadata from version control. Future work should replace
+Fabric/Twitter Kit with maintained APIs if the app is revived, add hardware or
+emulator verification for shake behavior, and modernize SDK/dependency levels in
+a dedicated pass.
+
+See `CHANGES.md` for the maintenance history.
