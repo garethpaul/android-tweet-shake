@@ -46,3 +46,6 @@ composer; do not add silent posting behavior.
 - Silent tweet posting or background account actions
 - Sensor rewrites without hardware verification notes
 - Broad dependency migrations bundled with unrelated behavior changes
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
