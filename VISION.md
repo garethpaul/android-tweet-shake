@@ -34,6 +34,11 @@ Contribution rules:
 
 ## Security And Privacy
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 Twitter credentials and user sessions are sensitive. Real keys and secrets must
 not be committed, and failures should not expose session details in logs.
 
