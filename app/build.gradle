@@ -1,10 +1,11 @@
 buildscript {
     repositories {
+        maven { url 'https://repo1.maven.org/maven2' }
         maven { url 'https://maven.fabric.io/public' }
     }
 
     dependencies {
-        classpath 'io.fabric.tools:gradle:1.+'
+        classpath 'io.fabric.tools:gradle:1.14.4'
     }
 }
 apply plugin: 'com.android.application'
@@ -17,7 +18,7 @@ repositories {
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    buildToolsVersion "24.0.3"
 
     defaultConfig {
         applicationId "gpj.tweetshake"
@@ -27,7 +28,11 @@ android {
         versionName "1.0"
     }
     buildTypes {
+        debug {
+            ext.enableCrashlytics = false
+        }
         release {
+            ext.enableCrashlytics = false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -39,4 +44,5 @@ dependencies {
     compile('com.twitter.sdk.android:twitter:1.5.1@aar') {
         transitive = true;
     }
+    testCompile 'junit:junit:4.12'
 }

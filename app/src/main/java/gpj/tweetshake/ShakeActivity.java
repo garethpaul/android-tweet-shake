@@ -13,39 +13,40 @@ import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 public class ShakeActivity extends Activity implements SensorEventListener {
 
+    private static final String TWEET_TEXT = "I just shook my phone";
+
     private SensorManager sensorManager;
-    private long lastUpdate;
-    public TweetComposer.Builder builder;
+    private Sensor accelerometer;
+    private final ShakeDetector shakeDetector = new ShakeDetector();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.shake_main);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_NORMAL);
-
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (sensorManager != null) {
+            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
     }
 
     private void checkShake(SensorEvent event) {
+        if (event == null || event.values == null || event.values.length < 3) {
+            return;
+        }
 
-        // Movement
         float x = event.values[0];
         float y = event.values[1];
         float z = event.values[2];
 
-        float accelationSquareRoot = (x * x + y * y + z * z)
-                / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
-        long actualTime = System.currentTimeMillis();
-        if (accelationSquareRoot >= 2) //
-        {
-            if (actualTime - lastUpdate < 200) {
-                return;
-            }
-            builder = new TweetComposer.Builder(this)
-                    .text("I just shook my phone");
-            builder.show();
+        if (shakeDetector.shouldTrigger(x, y, z, System.currentTimeMillis())) {
+            showTweetComposer();
         }
+    }
+
+    private void showTweetComposer() {
+        TweetComposer.Builder builder = new TweetComposer.Builder(this)
+                .text(TWEET_TEXT);
+        builder.show();
     }
 
 
@@ -79,5 +80,21 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (sensorManager != null && accelerometer != null) {
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+        super.onPause();
     }
 }
