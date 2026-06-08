@@ -1,5 +1,8 @@
 ## Android Tweet Shake Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Android Tweet Shake is a legacy Android app that signs in with Twitter and
 opens a tweet composer when the user shakes the phone.
 
