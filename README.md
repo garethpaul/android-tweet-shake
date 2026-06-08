@@ -1,5 +1,8 @@
 # Android Tweet Shake
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 Legacy Android sample that signs in with Twitter and opens a tweet composer when
 the user shakes the phone.
 
