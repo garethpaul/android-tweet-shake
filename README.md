@@ -7,6 +7,9 @@
 
 `garethpaul/android-tweet-shake` is an Android application or sample. Android app - shake to tweet
 
+This legacy Android sample signs in with Twitter and opens a tweet composer
+when the user shakes the phone.
+
 This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java (5), shell (1).
 
 ## Repository Contents
@@ -41,6 +44,11 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/android-tweet-shake.git
 cd android-tweet-shake
+make check
+scripts/check-baseline.sh
+./gradlew lint --no-daemon
+./gradlew test --no-daemon
+./gradlew assembleDebug --no-daemon
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
@@ -51,13 +59,18 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `./gradlew test` or Android Studio's test runner when the SDK is configured
+- `make check` - runs SDK-free source baseline checks.
+- `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
+- `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- Committed Twitter and Fabric credential placeholders must stay empty. Real
+  keys, tokens, signing files, and machine-local Fabric properties belong
+  outside Git.
 
 ## Security and Privacy Notes
 
@@ -71,8 +84,20 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Maintenance Notes
 
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
+- The current baseline initializes and unregisters the accelerometer listener
+  through the activity lifecycle, tests the shake threshold/debounce logic in a
+  small detector, compares acceleration magnitude against the configured 2.0g
+  threshold, keeps the resource lint gate clean, pins compatible legacy build
+  tooling, disables Crashlytics processing for empty-key local builds, and
+  removes generated IDE metadata from version control.
+- Future work should replace Fabric/Twitter Kit with maintained APIs if the app
+  is revived, add hardware or emulator verification for shake behavior, and
+  modernize SDK/dependency levels in a dedicated pass.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `CHANGES.md` for the maintenance history.
+- See `docs/plans/2026-06-08-shake-threshold-gravity-baseline.md` for the
+  shake-threshold gravity baseline.
 
 ## Contributing
 

@@ -9,10 +9,10 @@ final class ShakeDetector {
     private long lastShakeAtMillis = -SHAKE_DEBOUNCE_MILLIS;
 
     boolean shouldTrigger(float x, float y, float z, long nowMillis) {
-        float accelerationRatio = ((x * x) + (y * y) + (z * z))
-                / (GRAVITY_EARTH * GRAVITY_EARTH);
+        float accelerationGravity = (float) Math.sqrt((x * x) + (y * y) + (z * z))
+                / GRAVITY_EARTH;
 
-        if (accelerationRatio < SHAKE_THRESHOLD_GRAVITY - THRESHOLD_EPSILON) {
+        if (accelerationGravity < SHAKE_THRESHOLD_GRAVITY - THRESHOLD_EPSILON) {
             return false;
         }
 

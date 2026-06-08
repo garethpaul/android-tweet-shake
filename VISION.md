@@ -18,13 +18,14 @@ Priority:
 
 - Keep Twitter login and shake-triggered compose behavior understandable
 - Avoid committing Twitter keys, Fabric API keys, or signing material
-- Preserve the accelerometer threshold behavior until it is tested
+- Preserve tested accelerometer threshold and debounce behavior
 - Keep the legacy Gradle and Fabric setup reviewable
+- Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
 
 Next priorities:
 
 - Replace deprecated Fabric/Twitter SDK usage with maintained APIs if revived
-- Add sensor lifecycle handling and shake-threshold tests
+- Verify shake threshold behavior on hardware before changing sensor constants
 - Move any credentials into documented local configuration
 - Modernize Gradle, SDK levels, and dependencies in a dedicated pass
 

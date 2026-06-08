@@ -8,6 +8,7 @@ MAIN_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/MainActivity.java"
 SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
+THRESHOLD_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-threshold-gravity-baseline.md"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -19,6 +20,26 @@ SHAKE_LAYOUT="$ROOT_DIR/app/src/main/res/layout/shake_main.xml"
 
 if [ ! -f "$ROOT_DIR/CHANGES.md" ]; then
   printf '%s\n' "CHANGES.md must document repository maintenance." >&2
+  exit 1
+fi
+
+if [ ! -f "$ROOT_DIR/Makefile" ]; then
+  printf '%s\n' "Makefile must expose the SDK-free check wrapper." >&2
+  exit 1
+fi
+
+if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/Makefile"; then
+  printf '%s\n' "Makefile must run the SDK-free baseline check." >&2
+  exit 1
+fi
+
+if [ ! -f "$THRESHOLD_PLAN" ]; then
+  printf '%s\n' "Shake threshold gravity plan is missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Status: Completed" "$THRESHOLD_PLAN" || ! grep -Fq "make check" "$THRESHOLD_PLAN"; then
+  printf '%s\n' "Shake threshold gravity plan must record completed status and make check verification." >&2
   exit 1
 fi
 
@@ -117,8 +138,18 @@ if ! grep -Fq "lastShakeAtMillis = nowMillis;" "$SHAKE_DETECTOR"; then
   exit 1
 fi
 
+if ! grep -Fq "Math.sqrt((x * x) + (y * y) + (z * z))" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "ShakeDetector must compare vector magnitude against the gravity threshold." >&2
+  exit 1
+fi
+
 if ! grep -Fq "allowsShakeAfterCooldown" "$SHAKE_DETECTOR_TEST"; then
   printf '%s\n' "ShakeDetector unit tests must cover cooldown recovery." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ignoresMovementBelowConfiguredGravityThreshold" "$SHAKE_DETECTOR_TEST"; then
+  printf '%s\n' "ShakeDetector unit tests must cover 1.9g below-threshold movement." >&2
   exit 1
 fi
 
@@ -211,6 +242,11 @@ fi
 
 if ! grep -Fq "scripts/check-baseline.sh" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must document the baseline check." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the make check wrapper." >&2
   exit 1
 fi
 
