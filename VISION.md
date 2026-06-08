@@ -40,7 +40,7 @@ not be committed, and failures should not expose session details in logs.
 Sensor-triggered posting should remain user-confirmed through the tweet
 composer; do not add silent posting behavior.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Hardcoded Twitter keys, Fabric keys, tokens, or signing files
 - Silent tweet posting or background account actions
