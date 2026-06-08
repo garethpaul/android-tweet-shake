@@ -15,6 +15,20 @@ public class ShakeDetectorTest {
     }
 
     @Test
+    public void ignoresNaNAcceleration() {
+        ShakeDetector detector = new ShakeDetector();
+
+        assertFalse(detector.shouldTrigger(Float.NaN, 0f, 0f, 1000L));
+    }
+
+    @Test
+    public void ignoresInfiniteAcceleration() {
+        ShakeDetector detector = new ShakeDetector();
+
+        assertFalse(detector.shouldTrigger(Float.POSITIVE_INFINITY, 0f, 0f, 1000L));
+    }
+
+    @Test
     public void triggersAboveThreshold() {
         ShakeDetector detector = new ShakeDetector();
         float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;

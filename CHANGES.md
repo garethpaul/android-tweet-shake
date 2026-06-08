@@ -4,6 +4,8 @@
 
 - Corrected shake threshold evaluation to compare acceleration magnitude in g
   units rather than squared magnitude, with a regression test for 1.9g input.
+- Guarded shake detection against non-finite accelerometer values with
+  NaN/infinity unit coverage.
 - Added `make check` as the SDK-free verification wrapper.
 - Cleaned the Android lint gate by moving the logo bitmap to `drawable-nodpi`, routing display text through resources, and moving the screen background into the app theme.
 - Added a narrow lint configuration for the legacy Android toolchain API-database and density-folder warnings.

@@ -9,6 +9,7 @@ SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
 THRESHOLD_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-threshold-gravity-baseline.md"
+FINITE_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-finite-acceleration-baseline.md"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -40,6 +41,16 @@ fi
 
 if ! grep -Fq "Status: Completed" "$THRESHOLD_PLAN" || ! grep -Fq "make check" "$THRESHOLD_PLAN"; then
   printf '%s\n' "Shake threshold gravity plan must record completed status and make check verification." >&2
+  exit 1
+fi
+
+if [ ! -f "$FINITE_PLAN" ]; then
+  printf '%s\n' "Shake finite acceleration plan is missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Status: Completed" "$FINITE_PLAN" || ! grep -Fq "make check" "$FINITE_PLAN"; then
+  printf '%s\n' "Shake finite acceleration plan must record completed status and make check verification." >&2
   exit 1
 fi
 
@@ -143,6 +154,16 @@ if ! grep -Fq "Math.sqrt((x * x) + (y * y) + (z * z))" "$SHAKE_DETECTOR"; then
   exit 1
 fi
 
+if ! grep -Fq "hasFiniteAcceleration(x, y, z)" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "ShakeDetector must ignore non-finite accelerometer values." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Float.isNaN(value)" "$SHAKE_DETECTOR" || ! grep -Fq "Float.isInfinite(value)" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "ShakeDetector finite checks must reject NaN and infinite values." >&2
+  exit 1
+fi
+
 if ! grep -Fq "allowsShakeAfterCooldown" "$SHAKE_DETECTOR_TEST"; then
   printf '%s\n' "ShakeDetector unit tests must cover cooldown recovery." >&2
   exit 1
@@ -150,6 +171,11 @@ fi
 
 if ! grep -Fq "ignoresMovementBelowConfiguredGravityThreshold" "$SHAKE_DETECTOR_TEST"; then
   printf '%s\n' "ShakeDetector unit tests must cover 1.9g below-threshold movement." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ignoresNaNAcceleration" "$SHAKE_DETECTOR_TEST" || ! grep -Fq "ignoresInfiniteAcceleration" "$SHAKE_DETECTOR_TEST"; then
+  printf '%s\n' "ShakeDetector unit tests must cover non-finite accelerometer values." >&2
   exit 1
 fi
 

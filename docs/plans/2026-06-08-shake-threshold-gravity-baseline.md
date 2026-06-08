@@ -15,6 +15,7 @@ two times Earth gravity, not the square of that threshold.
 - Interpret the configured threshold as acceleration magnitude in gravity units.
 - Keep 2.0g input triggering a shake.
 - Reject 1.9g input as below the configured 2.0g threshold.
+- Reject non-finite accelerometer readings before threshold math.
 - Expose the SDK-free check through `make check`.
 
 ## Work Completed
@@ -22,6 +23,7 @@ two times Earth gravity, not the square of that threshold.
 - Updated `ShakeDetector` to compare acceleration magnitude divided by
   `GRAVITY_EARTH`.
 - Added regression coverage for 1.9g movement below the configured threshold.
+- Added regression coverage for `NaN` and infinite accelerometer readings.
 - Added `make check` as the root SDK-free verification wrapper.
 - Updated README, VISION, CHANGES, and the baseline checker.
 

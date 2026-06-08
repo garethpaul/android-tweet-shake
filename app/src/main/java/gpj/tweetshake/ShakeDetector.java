@@ -9,6 +9,10 @@ final class ShakeDetector {
     private long lastShakeAtMillis = -SHAKE_DEBOUNCE_MILLIS;
 
     boolean shouldTrigger(float x, float y, float z, long nowMillis) {
+        if (!hasFiniteAcceleration(x, y, z)) {
+            return false;
+        }
+
         float accelerationGravity = (float) Math.sqrt((x * x) + (y * y) + (z * z))
                 / GRAVITY_EARTH;
 
@@ -22,5 +26,13 @@ final class ShakeDetector {
 
         lastShakeAtMillis = nowMillis;
         return true;
+    }
+
+    private static boolean hasFiniteAcceleration(float x, float y, float z) {
+        return isFinite(x) && isFinite(y) && isFinite(z);
+    }
+
+    private static boolean isFinite(float value) {
+        return !Float.isNaN(value) && !Float.isInfinite(value);
     }
 }
