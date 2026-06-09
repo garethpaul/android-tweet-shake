@@ -10,6 +10,7 @@ SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
 THRESHOLD_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-threshold-gravity-baseline.md"
 FINITE_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-finite-acceleration-baseline.md"
+LOGIN_FAILURE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-tweet-login-failure-feedback.md"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -51,6 +52,16 @@ fi
 
 if ! grep -Fq "Status: Completed" "$FINITE_PLAN" || ! grep -Fq "make check" "$FINITE_PLAN"; then
   printf '%s\n' "Shake finite acceleration plan must record completed status and make check verification." >&2
+  exit 1
+fi
+
+if [ ! -f "$LOGIN_FAILURE_PLAN" ]; then
+  printf '%s\n' "Tweet login failure feedback plan is missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$LOGIN_FAILURE_PLAN" || ! grep -Fq "make check" "$LOGIN_FAILURE_PLAN"; then
+  printf '%s\n' "Tweet login failure feedback plan must record completed status and make check verification." >&2
   exit 1
 fi
 
@@ -208,6 +219,26 @@ fi
 
 if ! grep -Fq 'private static final String TWITTER_SECRET = "";' "$MAIN_ACTIVITY"; then
   printf '%s\n' "Committed Twitter secret placeholder must stay empty." >&2
+  exit 1
+fi
+
+if grep -Fq "Do something on failure" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter login failures must not stay as a placeholder comment." >&2
+  exit 1
+fi
+
+if ! grep -Fq "R.string.twitter_login_failed" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter login failures must show a resource-backed generic message." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'name="twitter_login_failed"' "$STRINGS"; then
+  printf '%s\n' "Twitter login failure message must live in string resources." >&2
+  exit 1
+fi
+
+if grep -Fq "exception.printStackTrace()" "$MAIN_ACTIVITY" || grep -Fq "Log." "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter login failures must not log exception or session details." >&2
   exit 1
 fi
 

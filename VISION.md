@@ -20,6 +20,7 @@ Priority:
 - Avoid committing Twitter keys, Fabric API keys, or signing material
 - Preserve tested accelerometer threshold, finite-value, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
+- Keep login failures user-visible without logging Twitter exception details
 - Keep the legacy Gradle and Fabric setup reviewable
 - Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
 
@@ -45,6 +46,7 @@ Canonical security policy and reporting:
 
 Twitter credentials and user sessions are sensitive. Real keys and secrets must
 not be committed, and failures should not expose session details in logs.
+Login failures should use generic user-facing copy rather than exception text.
 
 Sensor-triggered posting should remain user-confirmed through the tweet
 composer; do not add silent posting behavior.

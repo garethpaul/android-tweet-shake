@@ -2,5 +2,6 @@
     <string name="app_name">TweetShake</string>
     <string name="shake_to_tweet_title">Shake to Tweet</string>
     <string name="tweet_shake_logo_description">TweetShake logo</string>
+    <string name="twitter_login_failed">Twitter login failed.</string>
     <string name="action_settings">Settings</string>
 </resources>

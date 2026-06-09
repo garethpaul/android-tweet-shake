@@ -1,18 +1,21 @@
 package gpj.tweetshake;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
 import com.twitter.sdk.android.Twitter;
-import com.twitter.sdk.android.core.TwitterAuthConfig;
-import io.fabric.sdk.android.Fabric;
-import android.content.Intent;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
+
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends Activity {
 
@@ -32,14 +35,13 @@ public class MainActivity extends Activity {
         loginButton.setCallback(new Callback<TwitterSession>() {
             @Override
             public void success(Result<TwitterSession> result) {
-                // Do something with result, which provides a TwitterSession for making API calls
                 Intent intent = new Intent(getBaseContext(), ShakeActivity.class);
                 startActivity(intent);
             }
 
             @Override
             public void failure(TwitterException exception) {
-                // Do something on failure
+                Toast.makeText(MainActivity.this, R.string.twitter_login_failed, Toast.LENGTH_SHORT).show();
             }
         });
 

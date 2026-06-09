@@ -62,7 +62,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` - runs SDK-free source baseline checks.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - The baseline protects threshold units, finite sensor handling, debounce
-  behavior, credential placeholders, and legacy build guardrails.
+  behavior, credential placeholders, generic login-failure feedback, and legacy
+  build guardrails.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -73,6 +74,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Committed Twitter and Fabric credential placeholders must stay empty. Real
   keys, tokens, signing files, and machine-local Fabric properties belong
   outside Git.
+- Twitter login failures show a generic resource-backed message and do not log
+  exception or session details.
 
 ## Security and Privacy Notes
 
@@ -92,7 +95,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   threshold, rejects non-finite accelerometer values without consuming debounce
   state, keeps the resource lint gate clean, pins compatible legacy build
   tooling, disables Crashlytics processing for empty-key local builds, and
-  removes generated IDE metadata from version control.
+  removes generated IDE metadata from version control. Login failures surface a
+  generic message without printing Twitter exception details.
 - Future work should replace Fabric/Twitter Kit with maintained APIs if the app
   is revived, add hardware or emulator verification for shake behavior, and
   modernize SDK/dependency levels in a dedicated pass.
@@ -105,6 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   non-finite sensor input baseline.
 - See `docs/plans/2026-06-09-shake-invalid-input-debounce-baseline.md` for the
   invalid sensor debounce regression coverage.
+- See `docs/plans/2026-06-09-tweet-login-failure-feedback.md` for the generic
+  login-failure feedback baseline.
 
 ## Contributing
 
