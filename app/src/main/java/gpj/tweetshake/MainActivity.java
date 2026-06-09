@@ -24,12 +24,22 @@ public class MainActivity extends Activity {
     private static final String TWITTER_SECRET = "";
     private TwitterLoginButton loginButton;
 
+    private static boolean hasTwitterCredentials() {
+        return TWITTER_KEY.length() > 0 && TWITTER_SECRET.length() > 0;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        if (!hasTwitterCredentials()) {
+            Toast.makeText(this, R.string.twitter_login_unavailable, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
-        setContentView(R.layout.activity_main);
 
         loginButton = (TwitterLoginButton) findViewById(R.id.twitter_login_button);
         if (loginButton == null) {

@@ -242,6 +242,21 @@ if ! grep -Fq 'private static final String TWITTER_SECRET = "";' "$MAIN_ACTIVITY
   exit 1
 fi
 
+if ! grep -Fq "private static boolean hasTwitterCredentials()" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter credential availability must be centralized." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TWITTER_KEY.length() > 0 && TWITTER_SECRET.length() > 0" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter credentials must require both key and secret before SDK initialization." >&2
+  exit 1
+fi
+
+if ! grep -Fq "if (!hasTwitterCredentials())" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Empty Twitter credentials must stop login initialization." >&2
+  exit 1
+fi
+
 if grep -Fq "Do something on failure" "$MAIN_ACTIVITY"; then
   printf '%s\n' "Twitter login failures must not stay as a placeholder comment." >&2
   exit 1
@@ -369,6 +384,16 @@ fi
 
 if ! grep -Fq "CHANGES.md" "$ROOT_DIR/README.md"; then
   printf '%s\n' "README must point to CHANGES.md." >&2
+  exit 1
+fi
+
+if ! grep -Fq "empty Twitter credentials stop SDK initialization" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document the empty Twitter credential guard." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-tweet-empty-credential-guard.md"; then
+  printf '%s\n' "Tweet empty credential guard plan must document make check verification." >&2
   exit 1
 fi
 

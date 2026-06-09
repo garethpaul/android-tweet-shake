@@ -77,6 +77,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Committed Twitter and Fabric credential placeholders must stay empty. Real
   keys, tokens, signing files, and machine-local Fabric properties belong
   outside Git.
+- Local builds with empty Twitter credentials stop SDK initialization and show
+  generic unavailable feedback.
 - Twitter login failures show a generic resource-backed message and do not log
   exception or session details.
 - Missing Twitter login button wiring shows a generic resource-backed message
@@ -120,6 +122,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   availability guard.
 - See `docs/plans/2026-06-09-tweet-shake-make-gate-targets.md` for the root
   lint, test, and build gate contract.
+- See `docs/plans/2026-06-09-tweet-empty-credential-guard.md` for the empty
+  credential SDK initialization guard.
 
 ## Contributing
 

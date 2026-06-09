@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Guarded Twitter/Fabric initialization when committed credential placeholders
+  are empty, with generic unavailable feedback for local builds.
 - Added root `make lint`, `make test`, and `make build` gates around the
   existing SDK-free and Gradle verification commands.
 
