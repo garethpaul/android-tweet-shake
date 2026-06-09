@@ -29,6 +29,15 @@ public class ShakeDetectorTest {
     }
 
     @Test
+    public void invalidAccelerationDoesNotConsumeDebounceWindow() {
+        ShakeDetector detector = new ShakeDetector();
+        float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;
+
+        assertFalse(detector.shouldTrigger(Float.NaN, 0f, 0f, 1000L));
+        assertTrue(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, 1001L));
+    }
+
+    @Test
     public void triggersAboveThreshold() {
         ShakeDetector detector = new ShakeDetector();
         float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;

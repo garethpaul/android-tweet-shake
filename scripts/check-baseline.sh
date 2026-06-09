@@ -179,6 +179,11 @@ if ! grep -Fq "ignoresNaNAcceleration" "$SHAKE_DETECTOR_TEST" || ! grep -Fq "ign
   exit 1
 fi
 
+if ! grep -Fq "invalidAccelerationDoesNotConsumeDebounceWindow" "$SHAKE_DETECTOR_TEST"; then
+  printf '%s\n' "ShakeDetector unit tests must prove invalid values do not consume debounce." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'android:allowBackup="false"' "$MANIFEST"; then
   printf '%s\n' "The app must not opt into Android backup by default." >&2
   exit 1

@@ -19,6 +19,7 @@ Priority:
 - Keep Twitter login and shake-triggered compose behavior understandable
 - Avoid committing Twitter keys, Fabric API keys, or signing material
 - Preserve tested accelerometer threshold, finite-value, and debounce behavior
+- Ensure rejected sensor samples do not consume shake debounce state
 - Keep the legacy Gradle and Fabric setup reviewable
 - Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
 

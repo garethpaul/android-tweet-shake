@@ -61,6 +61,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make check` - runs SDK-free source baseline checks.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
+- The baseline protects threshold units, finite sensor handling, debounce
+  behavior, credential placeholders, and legacy build guardrails.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -87,10 +89,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - The current baseline initializes and unregisters the accelerometer listener
   through the activity lifecycle, tests the shake threshold/debounce logic in a
   small detector, compares acceleration magnitude against the configured 2.0g
-  threshold, rejects non-finite accelerometer values, keeps the resource lint
-  gate clean, pins compatible legacy build tooling, disables Crashlytics
-  processing for empty-key local builds, and removes generated IDE metadata from
-  version control.
+  threshold, rejects non-finite accelerometer values without consuming debounce
+  state, keeps the resource lint gate clean, pins compatible legacy build
+  tooling, disables Crashlytics processing for empty-key local builds, and
+  removes generated IDE metadata from version control.
 - Future work should replace Fabric/Twitter Kit with maintained APIs if the app
   is revived, add hardware or emulator verification for shake behavior, and
   modernize SDK/dependency levels in a dedicated pass.
@@ -101,6 +103,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   shake-threshold gravity baseline.
 - See `docs/plans/2026-06-08-shake-finite-acceleration-baseline.md` for the
   non-finite sensor input baseline.
+- See `docs/plans/2026-06-09-shake-invalid-input-debounce-baseline.md` for the
+  invalid sensor debounce regression coverage.
 
 ## Contributing
 
