@@ -24,6 +24,7 @@ Priority:
 - Keep login UI wiring failures user-visible instead of crashing
 - Keep the legacy Gradle and Fabric setup reviewable
 - Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
+- Keep root lint, test, and build gates wired to the Gradle project
 
 Next priorities:
 

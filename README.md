@@ -59,7 +59,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make check` - runs SDK-free source baseline checks.
+- `make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
+- `make test` - runs Gradle tests when the Android SDK is configured.
+- `make build` - runs debug assembly when the Android SDK is configured.
+- `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - The baseline protects threshold units, finite sensor handling, debounce
   behavior, credential placeholders, generic login-failure feedback, and legacy
@@ -115,6 +118,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   login-failure feedback baseline.
 - See `docs/plans/2026-06-09-tweet-login-button-guard.md` for the login button
   availability guard.
+- See `docs/plans/2026-06-09-tweet-shake-make-gate-targets.md` for the root
+  lint, test, and build gate contract.
 
 ## Contributing
 
