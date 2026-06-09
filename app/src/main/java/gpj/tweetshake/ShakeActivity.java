@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
@@ -25,8 +26,14 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.shake_main);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        if (sensorManager != null) {
-            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        if (sensorManager == null) {
+            showSensorUnavailable();
+            return;
+        }
+
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        if (accelerometer == null) {
+            showSensorUnavailable();
         }
     }
 
@@ -48,6 +55,10 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         TweetComposer.Builder builder = new TweetComposer.Builder(this)
                 .text(TWEET_TEXT);
         builder.show();
+    }
+
+    private void showSensorUnavailable() {
+        Toast.makeText(this, R.string.shake_sensor_unavailable, Toast.LENGTH_SHORT).show();
     }
 
 

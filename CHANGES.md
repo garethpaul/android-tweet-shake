@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added generic unavailable feedback when the shake screen cannot access an
+  accelerometer.
 - Rejected overflowed acceleration magnitude before shake threshold and
   debounce handling.
 - Routed shake debounce timing through Android's monotonic elapsed realtime

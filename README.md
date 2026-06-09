@@ -71,6 +71,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   changes do not affect shake timing.
 - Overflowed acceleration magnitude is rejected before shake debounce so
   implausibly large finite sensor values cannot trigger composition.
+- Missing shake sensor support shows generic unavailable feedback instead of
+  failing silently.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -108,8 +110,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   monotonic elapsed realtime for shake debounce timing, keeps the resource lint
   gate clean, pins compatible legacy build tooling, disables
   Crashlytics processing for empty-key local builds, and removes generated IDE
-  metadata from version control. Login failures surface a generic message
-  without printing Twitter exception details.
+  metadata from version control. Missing accelerometer support and login
+  failures surface generic messages without printing Twitter exception details.
 - Future work should replace Fabric/Twitter Kit with maintained APIs if the app
   is revived, add hardware or emulator verification for shake behavior, and
   modernize SDK/dependency levels in a dedicated pass.

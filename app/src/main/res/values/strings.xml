@@ -4,5 +4,6 @@
     <string name="tweet_shake_logo_description">TweetShake logo</string>
     <string name="twitter_login_failed">Twitter login failed.</string>
     <string name="twitter_login_unavailable">Twitter login is unavailable.</string>
+    <string name="shake_sensor_unavailable">Shake sensor is unavailable.</string>
     <string name="action_settings">Settings</string>
 </resources>

@@ -12,6 +12,7 @@ THRESHOLD_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-threshold-gravity-baseline
 FINITE_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-finite-acceleration-baseline.md"
 LOGIN_FAILURE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-tweet-login-failure-feedback.md"
 MAGNITUDE_OVERFLOW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-shake-magnitude-overflow-guard.md"
+SENSOR_UNAVAILABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-shake-sensor-unavailable-feedback.md"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -143,6 +144,21 @@ fi
 
 if ! grep -Fq "sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);" "$SHAKE_ACTIVITY"; then
   printf '%s\n' "ShakeActivity must initialize SensorManager before registering listeners." >&2
+  exit 1
+fi
+
+if ! grep -Fq "R.string.shake_sensor_unavailable" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "Missing shake sensor support must produce resource-backed user feedback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "sensorManager == null" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "ShakeActivity must handle missing SensorManager service." >&2
+  exit 1
+fi
+
+if ! grep -Fq "accelerometer == null" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "ShakeActivity must handle missing accelerometer hardware." >&2
   exit 1
 fi
 
@@ -320,6 +336,11 @@ if ! grep -Fq 'name="twitter_login_unavailable"' "$STRINGS"; then
   exit 1
 fi
 
+if ! grep -Fq 'name="shake_sensor_unavailable"' "$STRINGS"; then
+  printf '%s\n' "Shake sensor unavailable message must live in string resources." >&2
+  exit 1
+fi
+
 if grep -Fq "exception.printStackTrace()" "$MAIN_ACTIVITY" || grep -Fq "Log." "$MAIN_ACTIVITY"; then
   printf '%s\n' "Twitter login failures must not log exception or session details." >&2
   exit 1
@@ -430,6 +451,11 @@ if ! grep -Fq "Overflowed acceleration magnitude is rejected before shake deboun
   exit 1
 fi
 
+if ! grep -Fq "Missing shake sensor support shows generic unavailable feedback" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document missing shake sensor feedback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-tweet-empty-credential-guard.md"; then
   printf '%s\n' "Tweet empty credential guard plan must document make check verification." >&2
   exit 1
@@ -447,6 +473,16 @@ fi
 
 if ! grep -Fq "status: completed" "$MAGNITUDE_OVERFLOW_PLAN" || ! grep -Fq "make check" "$MAGNITUDE_OVERFLOW_PLAN"; then
   printf '%s\n' "Shake magnitude overflow guard plan must document completed status and make check verification." >&2
+  exit 1
+fi
+
+if [ ! -f "$SENSOR_UNAVAILABLE_PLAN" ]; then
+  printf '%s\n' "Shake sensor unavailable feedback plan is missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$SENSOR_UNAVAILABLE_PLAN" || ! grep -Fq "make check" "$SENSOR_UNAVAILABLE_PLAN"; then
+  printf '%s\n' "Shake sensor unavailable feedback plan must document completed status and make check verification." >&2
   exit 1
 fi
 

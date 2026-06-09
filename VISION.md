@@ -28,6 +28,7 @@ Priority:
 - Keep the legacy Gradle and Fabric setup reviewable
 - Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
 - Keep root lint, test, and build gates wired to the Gradle project
+- Keep missing shake sensor support visible to the user instead of silent
 
 Next priorities:
 
