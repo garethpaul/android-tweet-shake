@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -38,7 +39,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         float y = event.values[1];
         float z = event.values[2];
 
-        if (shakeDetector.shouldTrigger(x, y, z, System.currentTimeMillis())) {
+        if (shakeDetector.shouldTrigger(x, y, z, SystemClock.elapsedRealtime())) {
             showTweetComposer();
         }
     }

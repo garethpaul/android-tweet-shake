@@ -160,8 +160,18 @@ if ! grep -Fq "private final ShakeDetector shakeDetector = new ShakeDetector();"
   exit 1
 fi
 
-if ! grep -Fq "shakeDetector.shouldTrigger(x, y, z, System.currentTimeMillis())" "$SHAKE_ACTIVITY"; then
-  printf '%s\n' "ShakeActivity must route accelerometer values through ShakeDetector." >&2
+if ! grep -Fq "import android.os.SystemClock;" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "ShakeActivity must use Android's monotonic elapsed realtime clock." >&2
+  exit 1
+fi
+
+if ! grep -Fq "shakeDetector.shouldTrigger(x, y, z, SystemClock.elapsedRealtime())" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "ShakeActivity must route accelerometer values through ShakeDetector with monotonic time." >&2
+  exit 1
+fi
+
+if grep -Fq "System.currentTimeMillis()" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "Shake debounce timing must not use wall-clock time." >&2
   exit 1
 fi
 
@@ -392,8 +402,18 @@ if ! grep -Fq "empty Twitter credentials stop SDK initialization" "$ROOT_DIR/REA
   exit 1
 fi
 
+if ! grep -Fq "Shake debounce uses Android's monotonic elapsed realtime clock" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document monotonic shake debounce timing." >&2
+  exit 1
+fi
+
 if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-tweet-empty-credential-guard.md"; then
   printf '%s\n' "Tweet empty credential guard plan must document make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-shake-monotonic-debounce-time.md"; then
+  printf '%s\n' "Shake monotonic debounce plan must document make check verification." >&2
   exit 1
 fi
 

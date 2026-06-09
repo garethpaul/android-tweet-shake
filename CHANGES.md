@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Routed shake debounce timing through Android's monotonic elapsed realtime
+  clock instead of wall-clock time.
 - Guarded Twitter/Fabric initialization when committed credential placeholders
   are empty, with generic unavailable feedback for local builds.
 - Added root `make lint`, `make test`, and `make build` gates around the

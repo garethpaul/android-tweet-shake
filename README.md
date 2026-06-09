@@ -67,6 +67,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The baseline protects threshold units, finite sensor handling, debounce
   behavior, credential placeholders, generic login-failure feedback, and legacy
   build guardrails.
+- Shake debounce uses Android's monotonic elapsed realtime clock so wall-clock
+  changes do not affect shake timing.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -100,10 +102,11 @@ When the required SDK or runtime is unavailable, use static checks and source re
   through the activity lifecycle, tests the shake threshold/debounce logic in a
   small detector, compares acceleration magnitude against the configured 2.0g
   threshold, rejects non-finite accelerometer values without consuming debounce
-  state, keeps the resource lint gate clean, pins compatible legacy build
-  tooling, disables Crashlytics processing for empty-key local builds, and
-  removes generated IDE metadata from version control. Login failures surface a
-  generic message without printing Twitter exception details.
+  state, uses monotonic elapsed realtime for shake debounce timing, keeps the
+  resource lint gate clean, pins compatible legacy build tooling, disables
+  Crashlytics processing for empty-key local builds, and removes generated IDE
+  metadata from version control. Login failures surface a generic message
+  without printing Twitter exception details.
 - Future work should replace Fabric/Twitter Kit with maintained APIs if the app
   is revived, add hardware or emulator verification for shake behavior, and
   modernize SDK/dependency levels in a dedicated pass.
@@ -116,6 +119,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   non-finite sensor input baseline.
 - See `docs/plans/2026-06-09-shake-invalid-input-debounce-baseline.md` for the
   invalid sensor debounce regression coverage.
+- See `docs/plans/2026-06-09-shake-monotonic-debounce-time.md` for the
+  monotonic shake debounce timing contract.
 - See `docs/plans/2026-06-09-tweet-login-failure-feedback.md` for the generic
   login-failure feedback baseline.
 - See `docs/plans/2026-06-09-tweet-login-button-guard.md` for the login button
