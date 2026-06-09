@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Rejected overflowed acceleration magnitude before shake threshold and
+  debounce handling.
 - Routed shake debounce timing through Android's monotonic elapsed realtime
   clock instead of wall-clock time.
 - Guarded Twitter/Fabric initialization when committed credential placeholders

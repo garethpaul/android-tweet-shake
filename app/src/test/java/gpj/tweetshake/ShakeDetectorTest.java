@@ -38,6 +38,17 @@ public class ShakeDetectorTest {
     }
 
     @Test
+    public void ignoresOverflowAccelerationMagnitude() {
+        ShakeDetector detector = new ShakeDetector();
+
+        assertFalse(detector.shouldTrigger(
+                Float.MAX_VALUE,
+                Float.MAX_VALUE,
+                Float.MAX_VALUE,
+                1000L));
+    }
+
+    @Test
     public void triggersAboveThreshold() {
         ShakeDetector detector = new ShakeDetector();
         float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;

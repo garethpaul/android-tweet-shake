@@ -20,6 +20,7 @@ Priority:
 - Avoid committing Twitter keys, Fabric API keys, or signing material
 - Preserve tested accelerometer threshold, finite-value, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
+- Reject overflowed acceleration magnitude before shake debounce
 - Keep shake debounce timing based on monotonic elapsed realtime
 - Keep login failures user-visible without logging Twitter exception details
 - Keep login UI wiring failures user-visible instead of crashing

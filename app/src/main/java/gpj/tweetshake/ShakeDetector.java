@@ -13,7 +13,12 @@ final class ShakeDetector {
             return false;
         }
 
-        float accelerationGravity = (float) Math.sqrt((x * x) + (y * y) + (z * z))
+        float accelerationMagnitudeSquared = (x * x) + (y * y) + (z * z);
+        if (!isFinite(accelerationMagnitudeSquared)) {
+            return false;
+        }
+
+        float accelerationGravity = (float) Math.sqrt(accelerationMagnitudeSquared)
                 / GRAVITY_EARTH;
 
         if (accelerationGravity < SHAKE_THRESHOLD_GRAVITY - THRESHOLD_EPSILON) {

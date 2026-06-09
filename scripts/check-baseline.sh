@@ -11,6 +11,7 @@ SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTes
 THRESHOLD_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-threshold-gravity-baseline.md"
 FINITE_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-finite-acceleration-baseline.md"
 LOGIN_FAILURE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-tweet-login-failure-feedback.md"
+MAGNITUDE_OVERFLOW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-shake-magnitude-overflow-guard.md"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -191,7 +192,19 @@ if ! grep -Fq "lastShakeAtMillis = nowMillis;" "$SHAKE_DETECTOR"; then
 fi
 
 if ! grep -Fq "Math.sqrt((x * x) + (y * y) + (z * z))" "$SHAKE_DETECTOR"; then
-  printf '%s\n' "ShakeDetector must compare vector magnitude against the gravity threshold." >&2
+  if ! grep -Fq "Math.sqrt(accelerationMagnitudeSquared)" "$SHAKE_DETECTOR"; then
+    printf '%s\n' "ShakeDetector must compare vector magnitude against the gravity threshold." >&2
+    exit 1
+  fi
+fi
+
+if ! grep -Fq "float accelerationMagnitudeSquared = (x * x) + (y * y) + (z * z);" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "ShakeDetector must keep magnitude calculation explicit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "if (!isFinite(accelerationMagnitudeSquared))" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "ShakeDetector must reject overflowed acceleration magnitude." >&2
   exit 1
 fi
 
@@ -222,6 +235,11 @@ fi
 
 if ! grep -Fq "invalidAccelerationDoesNotConsumeDebounceWindow" "$SHAKE_DETECTOR_TEST"; then
   printf '%s\n' "ShakeDetector unit tests must prove invalid values do not consume debounce." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ignoresOverflowAccelerationMagnitude" "$SHAKE_DETECTOR_TEST"; then
+  printf '%s\n' "ShakeDetector unit tests must cover overflowed magnitude inputs." >&2
   exit 1
 fi
 
@@ -407,6 +425,11 @@ if ! grep -Fq "Shake debounce uses Android's monotonic elapsed realtime clock" "
   exit 1
 fi
 
+if ! grep -Fq "Overflowed acceleration magnitude is rejected before shake debounce" "$ROOT_DIR/README.md"; then
+  printf '%s\n' "README must document shake magnitude overflow handling." >&2
+  exit 1
+fi
+
 if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-tweet-empty-credential-guard.md"; then
   printf '%s\n' "Tweet empty credential guard plan must document make check verification." >&2
   exit 1
@@ -414,6 +437,16 @@ fi
 
 if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-shake-monotonic-debounce-time.md"; then
   printf '%s\n' "Shake monotonic debounce plan must document make check verification." >&2
+  exit 1
+fi
+
+if [ ! -f "$MAGNITUDE_OVERFLOW_PLAN" ]; then
+  printf '%s\n' "Shake magnitude overflow guard plan is missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$MAGNITUDE_OVERFLOW_PLAN" || ! grep -Fq "make check" "$MAGNITUDE_OVERFLOW_PLAN"; then
+  printf '%s\n' "Shake magnitude overflow guard plan must document completed status and make check verification." >&2
   exit 1
 fi
 
