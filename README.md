@@ -76,6 +76,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   outside Git.
 - Twitter login failures show a generic resource-backed message and do not log
   exception or session details.
+- Missing Twitter login button wiring shows a generic resource-backed message
+  and skips activity-result forwarding instead of crashing.
 
 ## Security and Privacy Notes
 
@@ -111,6 +113,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   invalid sensor debounce regression coverage.
 - See `docs/plans/2026-06-09-tweet-login-failure-feedback.md` for the generic
   login-failure feedback baseline.
+- See `docs/plans/2026-06-09-tweet-login-button-guard.md` for the login button
+  availability guard.
 
 ## Contributing
 

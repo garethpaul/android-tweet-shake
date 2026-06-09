@@ -14,3 +14,5 @@
 - Documented and enforced the lint, unit test, and debug assemble verification path.
 - Added generic, resource-backed Twitter login failure feedback without logging
   exception details.
+- Guarded the Twitter login button lookup and activity-result forwarding so
+  layout regressions produce generic feedback instead of crashes.

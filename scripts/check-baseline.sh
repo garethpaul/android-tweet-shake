@@ -232,8 +232,28 @@ if ! grep -Fq "R.string.twitter_login_failed" "$MAIN_ACTIVITY"; then
   exit 1
 fi
 
+if ! grep -Fq "if (loginButton == null)" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter login button lookup must be guarded." >&2
+  exit 1
+fi
+
+if ! grep -Fq "R.string.twitter_login_unavailable" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Missing Twitter login button feedback must use a string resource." >&2
+  exit 1
+fi
+
+if ! grep -Fq "if (loginButton != null)" "$MAIN_ACTIVITY"; then
+  printf '%s\n' "Twitter login activity results must only forward to an available button." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'name="twitter_login_failed"' "$STRINGS"; then
   printf '%s\n' "Twitter login failure message must live in string resources." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'name="twitter_login_unavailable"' "$STRINGS"; then
+  printf '%s\n' "Twitter login unavailable message must live in string resources." >&2
   exit 1
 fi
 

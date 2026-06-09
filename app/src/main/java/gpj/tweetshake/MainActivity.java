@@ -32,6 +32,11 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         loginButton = (TwitterLoginButton) findViewById(R.id.twitter_login_button);
+        if (loginButton == null) {
+            Toast.makeText(this, R.string.twitter_login_unavailable, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         loginButton.setCallback(new Callback<TwitterSession>() {
             @Override
             public void success(Result<TwitterSession> result) {
@@ -50,7 +55,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        loginButton.onActivityResult(requestCode, resultCode, data);
+        if (loginButton != null) {
+            loginButton.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
