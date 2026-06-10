@@ -17,6 +17,7 @@ README="$ROOT_DIR/README.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SHARESHEET_PLAN="$ROOT_DIR/docs/plans/2026-06-10-platform-sharesheet.md"
+SHARE_LAUNCH_PLAN="$ROOT_DIR/docs/plans/2026-06-10-sharesheet-launch-compatibility.md"
 
 for file in \
   "$APP_BUILD" \
@@ -96,7 +97,6 @@ for share_contract in \
   "new Intent(Intent.ACTION_SEND)" \
   'shareIntent.setType("text/plain")' \
   "shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text))" \
-  "shareIntent.resolveActivity(getPackageManager()) == null" \
   "Intent.createChooser(" \
   "R.string.share_chooser_title" \
   "catch (ActivityNotFoundException exception)" \
@@ -108,6 +108,11 @@ for share_contract in \
     exit 1
   fi
 done
+
+if grep -Fq ".resolveActivity(" "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "Sharesheet launch must not depend on a package-visibility query." >&2
+  exit 1
+fi
 
 for sensor_contract in \
   "event == null || event.values == null || event.values.length < 3" \
@@ -247,6 +252,12 @@ fi
 
 if [ ! -f "$SHARESHEET_PLAN" ] || ! grep -Fq "Status: Completed" "$SHARESHEET_PLAN" || ! grep -Fq "make check" "$SHARESHEET_PLAN"; then
   printf '%s\n' "Platform sharesheet plan must record completed make check verification." >&2
+  exit 1
+fi
+
+if [ ! -f "$SHARE_LAUNCH_PLAN" ] || ! grep -Fq "Status: Completed" "$SHARE_LAUNCH_PLAN" || \
+   ! grep -Fq "make check" "$SHARE_LAUNCH_PLAN"; then
+  printf '%s\n' "Sharesheet launch compatibility plan must record completed make check verification." >&2
   exit 1
 fi
 

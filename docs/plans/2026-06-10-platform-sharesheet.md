@@ -17,7 +17,7 @@ access.
 - Preserve the existing tested shake threshold, finite-input, overflow, and
   debounce behavior.
 - Send the prefilled text through Android's user-mediated sharesheet.
-- Guard missing share handlers and `ActivityNotFoundException`.
+- Guard missing share handlers through `ActivityNotFoundException`.
 - Prevent overlapping chooser launches from repeated sensor events.
 - Surface accelerometer listener registration failure.
 - Enforce the migration in the SDK-free baseline.
@@ -26,8 +26,8 @@ access.
 
 - Replaced `TweetComposer` with `ACTION_SEND`, `EXTRA_TEXT`, and
   `Intent.createChooser`.
-- Added handler resolution, launch exception handling, and a chooser-in-progress
-  guard reset when the activity resumes.
+- Added launch exception handling and a chooser-in-progress guard reset when the
+  activity resumes.
 - Made sensor registration state explicit and only unregister an active
   listener.
 - Declared accelerometer hardware optional and resource-backed the prefilled

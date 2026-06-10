@@ -78,8 +78,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Missing shake sensor support shows generic unavailable feedback instead of
   failing silently.
 - Failure to register the accelerometer listener is also surfaced to the user.
-- Sharesheet launch is guarded against missing handlers and duplicate sensor
-  events while a chooser is already opening.
+- Sharesheet launch follows Android's launch-and-catch pattern without a
+  package-visibility preflight and rejects duplicate sensor events while a
+  chooser is already opening.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -99,8 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   sample only supplies prefilled text after an explicit shake gesture.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/gpj/tweetshake/ShakeActivity.java, docs/plans/2026-06-08-tweet-shake-sensor-build-baseline.md, gradlew, and 1 more.
 - Review changes touching the accelerometer and outgoing share intents in
-  `ShakeActivity`; malformed sensor data and missing intent handlers must remain
-  guarded.
+  `ShakeActivity`; malformed sensor data and sharesheet launch failures must
+  remain guarded.
 - Review changes touching database, model, or persistence code; examples from the scan include docs/plans/2026-06-08-tweet-shake-sensor-build-baseline.md.
 
 ## Maintenance Notes
@@ -114,8 +115,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   monotonic elapsed realtime for shake debounce timing, keeps the resource lint
   gate clean, pins compatible legacy build tooling, and removes generated IDE
   metadata from version control. Missing accelerometer support, listener
-  registration failure, and unavailable sharing handlers surface generic
-  messages.
+  registration failure, and sharesheet launch failure surface generic messages.
 - Future work should add hardware or emulator verification for shake and
   chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

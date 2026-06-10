@@ -5,8 +5,10 @@
 - Replaced retired Fabric/Twitter Kit login and composer integration with the
   Android sharesheet, removed credential placeholders and the network
   permission, and made the shake screen the launcher.
-- Guarded missing share handlers, duplicate chooser launches, and failed sensor
-  listener registration while preserving the tested shake detector.
+- Guarded sharesheet launch failures, duplicate chooser launches, and failed
+  sensor listener registration while preserving the tested shake detector.
+- Removed the redundant share-handler query so future target-SDK package
+  visibility filtering cannot incorrectly suppress chooser launch.
 - Declared accelerometer hardware optional and moved prefilled share copy into
   string resources.
 - Removed login-screen resources that became unused with the launcher migration.

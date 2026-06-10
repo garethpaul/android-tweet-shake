@@ -21,7 +21,8 @@ Priority:
 - Ensure rejected sensor samples do not consume shake debounce state
 - Keep shake debounce timing based on monotonic elapsed realtime
 - Keep missing sensors and listener registration failures visible to the user
-- Guard missing sharesheet handlers and duplicate chooser launches
+- Guard sharesheet launch failures and duplicate chooser launches without
+  package-visibility preflight queries
 - Keep retired Fabric/Twitter dependencies, credentials, and network permission removed
 - Maintain SDK-free `make check` coverage for sensor, sharesheet, and build guardrails
 - Keep GitHub Actions aligned with the SDK-free `make check` baseline

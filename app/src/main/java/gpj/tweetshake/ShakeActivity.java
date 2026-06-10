@@ -57,11 +57,6 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text));
-        if (shareIntent.resolveActivity(getPackageManager()) == null) {
-            showShareUnavailable();
-            return;
-        }
-
         shareInProgress = true;
         try {
             startActivity(Intent.createChooser(
