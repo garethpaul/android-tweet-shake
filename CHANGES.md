@@ -2,6 +2,16 @@
 
 ## 2026-06-10
 
+- Replaced retired Fabric/Twitter Kit login and composer integration with the
+  Android sharesheet, removed credential placeholders and the network
+  permission, and made the shake screen the launcher.
+- Guarded missing share handlers, duplicate chooser launches, and failed sensor
+  listener registration while preserving the tested shake detector.
+- Declared accelerometer hardware optional and moved prefilled share copy into
+  string resources.
+- Removed login-screen resources that became unused with the launcher migration.
+- Made root checks location-independent, accepted either Android SDK variable,
+  and pinned CI to Ubuntu 24.04 with superseded-run cancellation.
 - Added a pinned, read-only GitHub Actions workflow that runs the SDK-free
   `make check` baseline with a bounded timeout and manual dispatch.
 - Extended the shell baseline and docs to require the hosted CI verification

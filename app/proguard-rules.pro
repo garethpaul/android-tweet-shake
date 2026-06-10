@@ -1,6 +1,6 @@
 # Add project specific ProGuard rules here.
 # By default, the flags in this file are appended to flags specified
-# in /opt/twitter/opt/android-sdk/tools/proguard/proguard-android.txt
+# by the Android Gradle plugin's default ProGuard configuration.
 # You can edit the include path and order by changing the proguardFiles
 # directive in build.gradle.
 #

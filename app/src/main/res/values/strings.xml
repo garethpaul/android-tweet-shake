@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">TweetShake</string>
-    <string name="shake_to_tweet_title">Shake to Tweet</string>
+    <string name="shake_to_tweet_title">Shake to share</string>
     <string name="tweet_shake_logo_description">TweetShake logo</string>
-    <string name="twitter_login_failed">Twitter login failed.</string>
-    <string name="twitter_login_unavailable">Twitter login is unavailable.</string>
     <string name="shake_sensor_unavailable">Shake sensor is unavailable.</string>
-    <string name="action_settings">Settings</string>
+    <string name="share_chooser_title">Share your shake</string>
+    <string name="share_text">I just shook my phone</string>
+    <string name="share_unavailable">No sharing app is available.</string>
 </resources>

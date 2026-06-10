@@ -1,19 +1,4 @@
-buildscript {
-    repositories {
-        maven { url 'https://repo1.maven.org/maven2' }
-        maven { url 'https://maven.fabric.io/public' }
-    }
-
-    dependencies {
-        classpath 'io.fabric.tools:gradle:1.14.4'
-    }
-}
 apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
-
-repositories {
-    maven { url 'https://maven.fabric.io/public' }
-}
 
 
 android {
@@ -28,11 +13,7 @@ android {
         versionName "1.0"
     }
     buildTypes {
-        debug {
-            ext.enableCrashlytics = false
-        }
         release {
-            ext.enableCrashlytics = false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -41,8 +22,5 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile('com.twitter.sdk.android:twitter:1.5.1@aar') {
-        transitive = true;
-    }
     testCompile 'junit:junit:4.12'
 }

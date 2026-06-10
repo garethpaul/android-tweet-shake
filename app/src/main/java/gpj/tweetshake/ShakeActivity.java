@@ -1,25 +1,23 @@
 package gpj.tweetshake;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
-
 public class ShakeActivity extends Activity implements SensorEventListener {
-
-    private static final String TWEET_TEXT = "I just shook my phone";
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private final ShakeDetector shakeDetector = new ShakeDetector();
+    private boolean sensorRegistered;
+    private boolean shareInProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,41 +45,40 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         float z = event.values[2];
 
         if (shakeDetector.shouldTrigger(x, y, z, SystemClock.elapsedRealtime())) {
-            showTweetComposer();
+            showShareComposer();
         }
     }
 
-    private void showTweetComposer() {
-        TweetComposer.Builder builder = new TweetComposer.Builder(this)
-                .text(TWEET_TEXT);
-        builder.show();
+    private void showShareComposer() {
+        if (shareInProgress || isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text));
+        if (shareIntent.resolveActivity(getPackageManager()) == null) {
+            showShareUnavailable();
+            return;
+        }
+
+        shareInProgress = true;
+        try {
+            startActivity(Intent.createChooser(
+                    shareIntent,
+                    getString(R.string.share_chooser_title)));
+        } catch (ActivityNotFoundException exception) {
+            shareInProgress = false;
+            showShareUnavailable();
+        }
     }
 
     private void showSensorUnavailable() {
         Toast.makeText(this, R.string.shake_sensor_unavailable, Toast.LENGTH_SHORT).show();
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    private void showShareUnavailable() {
+        Toast.makeText(this, R.string.share_unavailable, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -97,15 +94,23 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     @Override
     protected void onResume() {
         super.onResume();
+        shareInProgress = false;
         if (sensorManager != null && accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorRegistered = sensorManager.registerListener(
+                    this,
+                    accelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+            if (!sensorRegistered) {
+                showSensorUnavailable();
+            }
         }
     }
 
     @Override
     protected void onPause() {
-        if (sensorManager != null) {
+        if (sensorManager != null && sensorRegistered) {
             sensorManager.unregisterListener(this);
+            sensorRegistered = false;
         }
         super.onPause();
     }

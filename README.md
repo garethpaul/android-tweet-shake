@@ -7,10 +7,10 @@
 
 `garethpaul/android-tweet-shake` is an Android application or sample. Android app - shake to tweet
 
-This legacy Android sample signs in with Twitter and opens a tweet composer
-when the user shakes the phone.
+This legacy Android sample opens Android's sharesheet with prefilled text when
+the user shakes the phone.
 
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java (5), shell (1).
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java (4), shell (1).
 
 ## Repository Contents
 
@@ -65,11 +65,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
-  requests.
+  requests on Ubuntu 24.04 and cancels superseded runs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded
-  timeout; local Gradle checks require an explicit `ANDROID_HOME`.
+  timeout; local Gradle checks accept `ANDROID_HOME` or `ANDROID_SDK_ROOT`.
 - The baseline protects threshold units, finite sensor handling, debounce
-  behavior, credential placeholders, generic login-failure feedback, and legacy
+  behavior, Android sharesheet dispatch, sensor lifecycle handling, and legacy
   build guardrails.
 - Shake debounce uses Android's monotonic elapsed realtime clock so wall-clock
   changes do not affect shake timing.
@@ -77,30 +77,30 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   implausibly large finite sensor values cannot trigger composition.
 - Missing shake sensor support shows generic unavailable feedback instead of
   failing silently.
+- Failure to register the accelerometer listener is also surfaced to the user.
+- Sharesheet launch is guarded against missing handlers and duplicate sensor
+  events while a chooser is already opening.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
 
-- Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
-- Committed Twitter and Fabric credential placeholders must stay empty. Real
-  keys, tokens, signing files, and machine-local Fabric properties belong
-  outside Git.
-- Local builds with empty Twitter credentials stop SDK initialization and show
-  generic unavailable feedback.
-- Twitter login failures show a generic resource-backed message and do not log
-  exception or session details.
-- Missing Twitter login button wiring shows a generic resource-backed message
-  and skips activity-result forwarding instead of crashing.
+- The app has no API key, OAuth credential, token, Fabric metadata, or signing
+  configuration requirement.
+- Sharing is delegated to an app chosen by the user through the Android
+  sharesheet.
 
 ## Security and Privacy Notes
 
-- Review changes touching authentication or token handling; examples from the scan include docs/plans/2026-06-08-tweet-shake-lint-resource-baseline.md, docs/plans/2026-06-08-tweet-shake-sensor-build-baseline.md.
-- Review changes touching external API calls or credential-adjacent configuration; examples from the scan include app/build.gradle, app/src/main/AndroidManifest.xml, app/src/main/java/gpj/tweetshake/MainActivity.java, app/src/main/java/gpj/tweetshake/ShakeActivity.java, and 5 more.
-- Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/build.gradle, app/src/androidTest/java/gpj/tweetshake/ApplicationTest.java, app/src/main/AndroidManifest.xml, app/src/main/res/layout/activity_main.xml, and 6 more.
+- The app does not request the `INTERNET` permission and does not authenticate
+  directly with a social network.
+- The selected sharing app owns any account, network, and posting behavior; the
+  sample only supplies prefilled text after an explicit shake gesture.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/gpj/tweetshake/ShakeActivity.java, docs/plans/2026-06-08-tweet-shake-sensor-build-baseline.md, gradlew, and 1 more.
-- Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include app/lint.xml, app/src/main/AndroidManifest.xml, app/src/main/java/gpj/tweetshake/MainActivity.java, app/src/main/java/gpj/tweetshake/ShakeActivity.java, and 5 more.
+- Review changes touching the accelerometer and outgoing share intents in
+  `ShakeActivity`; malformed sensor data and missing intent handlers must remain
+  guarded.
 - Review changes touching database, model, or persistence code; examples from the scan include docs/plans/2026-06-08-tweet-shake-sensor-build-baseline.md.
 
 ## Maintenance Notes
@@ -112,13 +112,12 @@ When the required SDK or runtime is unavailable, use static checks and source re
   threshold, rejects non-finite accelerometer values without consuming debounce
   state, rejects overflowed acceleration magnitude before debounce, uses
   monotonic elapsed realtime for shake debounce timing, keeps the resource lint
-  gate clean, pins compatible legacy build tooling, disables
-  Crashlytics processing for empty-key local builds, and removes generated IDE
-  metadata from version control. Missing accelerometer support and login
-  failures surface generic messages without printing Twitter exception details.
-- Future work should replace Fabric/Twitter Kit with maintained APIs if the app
-  is revived, add hardware or emulator verification for shake behavior, and
-  modernize SDK/dependency levels in a dedicated pass.
+  gate clean, pins compatible legacy build tooling, and removes generated IDE
+  metadata from version control. Missing accelerometer support, listener
+  registration failure, and unavailable sharing handlers surface generic
+  messages.
+- Future work should add hardware or emulator verification for shake and
+  chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `CHANGES.md` for the maintenance history.
@@ -132,16 +131,15 @@ When the required SDK or runtime is unavailable, use static checks and source re
   monotonic shake debounce timing contract.
 - See `docs/plans/2026-06-09-shake-magnitude-overflow-guard.md` for the
   overflowed acceleration magnitude guard.
-- See `docs/plans/2026-06-09-tweet-login-failure-feedback.md` for the generic
-  login-failure feedback baseline.
-- See `docs/plans/2026-06-09-tweet-login-button-guard.md` for the login button
-  availability guard.
 - See `docs/plans/2026-06-09-tweet-shake-make-gate-targets.md` for the root
   lint, test, and build gate contract.
-- See `docs/plans/2026-06-09-tweet-empty-credential-guard.md` for the empty
-  credential SDK initialization guard.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-10-platform-sharesheet.md` for the migration away
+  from retired Fabric and Twitter Kit dependencies.
+
+Earlier login and credential plans remain in `docs/plans/` as historical
+context for the retired integration.
 
 ## Contributing
 

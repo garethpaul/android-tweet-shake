@@ -3,47 +3,41 @@
 This document explains the current state and direction of the project.
 Project overview and developer docs: [`README.md`](README.md)
 
-Android Tweet Shake is a legacy Android app that signs in with Twitter and
-opens a tweet composer when the user shakes the phone.
+Android Tweet Shake is a legacy Android app that opens the platform sharesheet
+with prefilled text when the user shakes the phone.
 
-The repository is useful as a small Fabric/Twitter SDK and accelerometer sample
-from an older Android stack.
+The repository is useful as a small accelerometer, lifecycle, and user-mediated
+sharing sample from an older Android stack.
 
-The goal is to preserve the sample's intent while making authentication,
-sensor, and dependency modernization explicit and safe.
+The goal is to preserve the sample's intent while keeping sensor behavior,
+sharing, and dependency modernization explicit and safe.
 
 The current focus is:
 
 Priority:
 
-- Keep Twitter login and shake-triggered compose behavior understandable
-- Avoid committing Twitter keys, Fabric API keys, or signing material
-- Preserve tested accelerometer threshold, finite-value, and debounce behavior
+- Keep shake-triggered sharing understandable and user-confirmed
+- Preserve tested accelerometer threshold, finite-value, overflow, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
-- Reject overflowed acceleration magnitude before shake debounce
 - Keep shake debounce timing based on monotonic elapsed realtime
-- Keep login failures user-visible without logging Twitter exception details
-- Keep login UI wiring failures user-visible instead of crashing
-- Keep empty-key local builds from initializing Twitter/Fabric SDKs
-- Keep the legacy Gradle and Fabric setup reviewable
-- Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
+- Keep missing sensors and listener registration failures visible to the user
+- Guard missing sharesheet handlers and duplicate chooser launches
+- Keep retired Fabric/Twitter dependencies, credentials, and network permission removed
+- Maintain SDK-free `make check` coverage for sensor, sharesheet, and build guardrails
 - Keep GitHub Actions aligned with the SDK-free `make check` baseline
 - Keep root lint, test, and build gates wired to the Gradle project
-- Keep missing shake sensor support visible to the user instead of silent
 
 Next priorities:
 
-- Replace deprecated Fabric/Twitter SDK usage with maintained APIs if revived
-- Verify shake threshold behavior on hardware before changing sensor constants
-- Move any credentials into documented local configuration
+- Verify shake threshold and chooser behavior on hardware
 - Modernize Gradle, SDK levels, and dependencies in a dedicated pass
+- Add activity-level tests after the Android toolchain is modernized
 
 Contribution rules:
 
-- One PR = one focused auth, sensor, build, or documentation topic.
-- Do not mix SDK migration with user-facing compose behavior unless required.
+- One PR = one focused sensor, sharing, build, or documentation topic.
 - Verify shake behavior on hardware when changing sensor logic.
-- Keep credential placeholders empty in committed source.
+- Keep sharing explicit and user-mediated through the platform chooser.
 - Keep `.github/workflows/check.yml` in sync with the SDK-free baseline and
   local Gradle gates.
 
@@ -53,17 +47,17 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-Twitter credentials and user sessions are sensitive. Real keys and secrets must
-not be committed, and failures should not expose session details in logs.
-Login failures should use generic user-facing copy rather than exception text.
+The app does not own social credentials, sessions, or posting APIs. The selected
+sharing app controls account and network behavior after the user chooses it.
 
-Sensor-triggered posting should remain user-confirmed through the tweet
-composer; do not add silent posting behavior.
+Sensor-triggered sharing must remain user-confirmed through the Android
+sharesheet; do not add silent posting or background account actions.
 
 ## What We Will Not Merge (For Now)
 
-- Hardcoded Twitter keys, Fabric keys, tokens, or signing files
-- Silent tweet posting or background account actions
+- Hardcoded social API keys, tokens, or signing files
+- Silent posting or background account actions
+- Restored Fabric or Twitter Kit dependencies
 - Sensor rewrites without hardware verification notes
 - Broad dependency migrations bundled with unrelated behavior changes
 
