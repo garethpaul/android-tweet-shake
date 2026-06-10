@@ -1,5 +1,13 @@
 # Android Tweet Shake Changes
 
+## 2026-06-10
+
+- Added a pinned, read-only GitHub Actions workflow that runs the SDK-free
+  `make check` baseline with a bounded timeout and manual dispatch.
+- Extended the shell baseline and docs to require the hosted CI verification
+  path.
+- Removed the maintainer-specific Android SDK path from the Makefile.
+
 ## 2026-06-09
 
 - Added generic unavailable feedback when the shake screen cannot access an

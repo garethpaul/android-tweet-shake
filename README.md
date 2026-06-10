@@ -64,6 +64,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make build` - runs debug assembly when the Android SDK is configured.
 - `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
+- GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
+  requests.
+- The workflow uses immutable checkout, read-only permissions, and a bounded
+  timeout; local Gradle checks require an explicit `ANDROID_HOME`.
 - The baseline protects threshold units, finite sensor handling, debounce
   behavior, credential placeholders, generic login-failure feedback, and legacy
   build guardrails.
@@ -136,6 +140,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   lint, test, and build gate contract.
 - See `docs/plans/2026-06-09-tweet-empty-credential-guard.md` for the empty
   credential SDK initialization guard.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
+  baseline.
 
 ## Contributing
 

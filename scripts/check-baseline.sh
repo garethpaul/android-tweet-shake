@@ -13,6 +13,8 @@ FINITE_PLAN="$ROOT_DIR/docs/plans/2026-06-08-shake-finite-acceleration-baseline.
 LOGIN_FAILURE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-tweet-login-failure-feedback.md"
 MAGNITUDE_OVERFLOW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-shake-magnitude-overflow-guard.md"
 SENSOR_UNAVAILABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-shake-sensor-unavailable-feedback.md"
+CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
+CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 LINT_XML="$ROOT_DIR/app/lint.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -24,6 +26,16 @@ SHAKE_LAYOUT="$ROOT_DIR/app/src/main/res/layout/shake_main.xml"
 
 if [ ! -f "$ROOT_DIR/CHANGES.md" ]; then
   printf '%s\n' "CHANGES.md must document repository maintenance." >&2
+  exit 1
+fi
+
+if [ ! -f "$CI_WORKFLOW" ]; then
+  printf '%s\n' "GitHub Actions workflow is missing." >&2
+  exit 1
+fi
+
+if [ ! -f "$CI_PLAN" ]; then
+  printf '%s\n' "CI baseline plan is missing." >&2
   exit 1
 fi
 
@@ -89,6 +101,26 @@ fi
 
 if ! grep -Fq "Android Tweet Shake Changes" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "CHANGES.md must identify the project." >&2
+  exit 1
+fi
+
+for workflow_contract in \
+  "permissions:" \
+  "contents: read" \
+  "timeout-minutes: 5" \
+  "workflow_dispatch:" \
+  "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" \
+  'ANDROID_HOME: ""' \
+  'ANDROID_SDK_ROOT: ""' \
+  "run: make check"; do
+  if ! grep -Fq "$workflow_contract" "$CI_WORKFLOW"; then
+    printf '%s\n' "GitHub Actions workflow must keep contract: $workflow_contract" >&2
+    exit 1
+  fi
+done
+
+if grep -Fq "/home/gjones" "$ROOT_DIR/Makefile"; then
+  printf '%s\n' "Makefile must not embed a maintainer-specific Android SDK path." >&2
   exit 1
 fi
 
@@ -456,6 +488,15 @@ if ! grep -Fq "Missing shake sensor support shows generic unavailable feedback" 
   exit 1
 fi
 
+if ! grep -Fq "GitHub Actions" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "docs/plans/2026-06-10-ci-baseline.md" "$ROOT_DIR/README.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project docs must record the GitHub Actions CI baseline." >&2
+  exit 1
+fi
+
 if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-tweet-empty-credential-guard.md"; then
   printf '%s\n' "Tweet empty credential guard plan must document make check verification." >&2
   exit 1
@@ -483,6 +524,11 @@ fi
 
 if ! grep -Fq "status: completed" "$SENSOR_UNAVAILABLE_PLAN" || ! grep -Fq "make check" "$SENSOR_UNAVAILABLE_PLAN"; then
   printf '%s\n' "Shake sensor unavailable feedback plan must document completed status and make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Status: Completed" "$CI_PLAN" || ! grep -Fq "make check" "$CI_PLAN"; then
+  printf '%s\n' "CI baseline plan must document completed status and make check verification." >&2
   exit 1
 fi
 

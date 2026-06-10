@@ -27,6 +27,7 @@ Priority:
 - Keep empty-key local builds from initializing Twitter/Fabric SDKs
 - Keep the legacy Gradle and Fabric setup reviewable
 - Maintain SDK-free `make check` coverage for sensor, credential, and build guardrails
+- Keep GitHub Actions aligned with the SDK-free `make check` baseline
 - Keep root lint, test, and build gates wired to the Gradle project
 - Keep missing shake sensor support visible to the user instead of silent
 
@@ -43,6 +44,8 @@ Contribution rules:
 - Do not mix SDK migration with user-facing compose behavior unless required.
 - Verify shake behavior on hardware when changing sensor logic.
 - Keep credential placeholders empty in committed source.
+- Keep `.github/workflows/check.yml` in sync with the SDK-free baseline and
+  local Gradle gates.
 
 ## Security And Privacy
 
