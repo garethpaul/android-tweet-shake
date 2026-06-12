@@ -18,6 +18,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     private final ShakeDetector shakeDetector = new ShakeDetector();
     private boolean sensorRegistered;
     private boolean shareInProgress;
+    private boolean activityResumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +37,10 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     }
 
     private void checkShake(SensorEvent event) {
+        if (!activityResumed) {
+            return;
+        }
+
         if (event == null || event.values == null || event.values.length < 3) {
             return;
         }
@@ -89,6 +94,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     @Override
     protected void onResume() {
         super.onResume();
+        activityResumed = true;
         shareInProgress = false;
         if (sensorManager != null && accelerometer != null) {
             sensorRegistered = sensorManager.registerListener(
@@ -103,6 +109,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
 
     @Override
     protected void onPause() {
+        activityResumed = false;
         if (sensorManager != null && sensorRegistered) {
             sensorManager.unregisterListener(this);
             sensorRegistered = false;

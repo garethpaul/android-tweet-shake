@@ -1,5 +1,10 @@
 # Android Tweet Shake Changes
 
+## 2026-06-12
+
+- Ignored queued accelerometer callbacks after activity pause so stale sensor
+  events cannot launch the sharesheet from the background.
+
 ## 2026-06-10
 
 - Replaced retired Fabric/Twitter Kit login and composer integration with the

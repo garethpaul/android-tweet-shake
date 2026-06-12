@@ -18,6 +18,7 @@ CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SHARESHEET_PLAN="$ROOT_DIR/docs/plans/2026-06-10-platform-sharesheet.md"
 SHARE_LAUNCH_PLAN="$ROOT_DIR/docs/plans/2026-06-10-sharesheet-launch-compatibility.md"
+FOREGROUND_CALLBACK_PLAN="$ROOT_DIR/docs/plans/2026-06-12-shake-foreground-callback-guard.md"
 
 for file in \
   "$APP_BUILD" \
@@ -131,6 +132,32 @@ for sensor_contract in \
   fi
 done
 
+CHECK_SHAKE=$(sed -n '/private void checkShake(SensorEvent event)/,/private void showShareComposer()/p' "$SHAKE_ACTIVITY")
+ON_RESUME=$(sed -n '/protected void onResume()/,/protected void onPause()/p' "$SHAKE_ACTIVITY")
+ON_PAUSE=$(sed -n '/protected void onPause()/,/^    }/p' "$SHAKE_ACTIVITY")
+
+if ! printf '%s\n' "$CHECK_SHAKE" | grep -Fq "if (!activityResumed"; then
+  printf '%s\n' "Queued shake callbacks must be ignored outside the resumed activity state." >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ON_RESUME" | grep -Fq "activityResumed = true;"; then
+  printf '%s\n' "Shake activity must mark itself resumed before processing callbacks." >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ON_PAUSE" | grep -Fq "activityResumed = false;"; then
+  printf '%s\n' "Shake activity must become inactive before listener teardown." >&2
+  exit 1
+fi
+
+if [ ! -f "$FOREGROUND_CALLBACK_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$FOREGROUND_CALLBACK_PLAN" || \
+   ! grep -Fq "make check" "$FOREGROUND_CALLBACK_PLAN"; then
+  printf '%s\n' "Shake foreground callback plan must record completed make check verification." >&2
+  exit 1
+fi
+
 for detector_contract in \
   "static final float GRAVITY_EARTH = 9.80665f" \
   "static final float SHAKE_THRESHOLD_GRAVITY = 2.0f" \
@@ -143,6 +170,11 @@ for detector_contract in \
     exit 1
   fi
 done
+
+if ! grep -Fq "Queued accelerometer callbacks are ignored after the activity pauses" "$README"; then
+  printf '%s\n' "README must document the foreground shake callback guard." >&2
+  exit 1
+fi
 
 for test_contract in \
   "ignoresMovementBelowThreshold" \
