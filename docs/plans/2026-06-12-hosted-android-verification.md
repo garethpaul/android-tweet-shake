@@ -1,6 +1,6 @@
 # Hosted Android Verification
 
-## Status: Planned
+## Status: Implementation Complete; Hosted Verification Pending
 
 ## Context
 
@@ -26,12 +26,14 @@ Android verification that succeeds locally.
 
 ## Verification
 
-- Run SDK-backed `make check` from the repository root and an external working
-  directory.
-- Confirm lint reports only the documented `OldTargetApi` warning.
-- Run hostile workflow, checker, documentation, and completed-plan mutations.
-- Run `git diff --check`.
-- Require the exact-head pull-request workflow to pass.
+- Passed the SDK-backed lint, JVM test, and debug assembly gate with
+  `ANDROID_HOME=/home/gjones/android-sdk ANDROID_SDK_ROOT=/home/gjones/android-sdk make check`.
+- Passed the same complete gate from an external working directory.
+- Confirmed lint reports exactly one `OldTargetApi` warning.
+- Confirmed eight hostile workflow, checker, documentation, and plan-status
+  mutations are rejected.
+- Passed `git diff --check`.
+- Exact-head pull-request workflow pending after the implementation push.
 
 ## Boundaries
 

@@ -10,9 +10,10 @@ and pull requests.
 
 ## Changes
 
-- Added a pinned, read-only GitHub Actions workflow that runs the SDK-free
-  `make check` baseline with a five-minute timeout, manual dispatch, and no
-  persisted checkout credentials.
+- Added a pinned, read-only GitHub Actions workflow with manual dispatch and no
+  persisted checkout credentials. It now installs Android API 22 and
+  build-tools 24.0.3, selects Java 8, and runs the complete `make check` gate
+  with a 15-minute timeout.
 - Removed the maintainer-specific default SDK path; local Gradle checks require
   explicit SDK configuration.
 - Extended the shell baseline to require a byte-exact canonical workflow and
@@ -26,4 +27,5 @@ and pull requests.
 
 ## Verification
 
-- `make check`
+- SDK-backed `make check`
+- Exact-head pull-request workflow

@@ -85,7 +85,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   chooser is already opening.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
-When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
+The canonical GitHub Actions workflow installs Android API 22 and build-tools
+24.0.3, selects Java 8, and runs the complete `make check` gate. The legacy
+target SDK produces one documented `OldTargetApi` compatibility warning.
+
+When the required SDK or runtime is unavailable locally, use static checks and source review first, then rely on the hosted matching platform toolchain.
 
 ## Configuration and Secrets
 
@@ -120,6 +124,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   registration failure, and sharesheet launch failure surface generic messages.
 - Future work should add hardware or emulator verification for shake and
   chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
+- Hosted pull requests and default-branch pushes run lint, JVM tests, and debug
+  assembly with Android API 22, build-tools 24.0.3, and Java 8.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `CHANGES.md` for the maintenance history.
@@ -137,6 +143,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   lint, test, and build gate contract.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-12-hosted-android-verification.md` for the complete
+  hosted Android lint, test, and build gate.
 - See `docs/plans/2026-06-10-platform-sharesheet.md` for the migration away
   from retired Fabric and Twitter Kit dependencies.
 
