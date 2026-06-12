@@ -37,9 +37,14 @@ Additional scan context:
 
 - Git
 - Android Studio or a compatible Android SDK
-- Gradle or the checked-in Gradle wrapper when present
+- Java 8 and the checked-in Gradle wrapper
 
 ### Setup
+
+The generated wrapper still executes Gradle 2.2.1 for compatibility. It uses
+`distributionSha256Sum` to authenticate the download, while the SDK-free
+baseline verifies the wrapper JAR and launchers. This does not make an
+uncached build offline-reproducible; Gradle's HTTPS service is still required.
 
 ```bash
 git clone https://github.com/garethpaul/android-tweet-shake.git

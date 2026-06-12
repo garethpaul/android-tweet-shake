@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Regenerated the wrapper bootstrap with official Gradle 8.14.5 tooling while
+  retaining Gradle 2.2.1, and pinned exact distribution and artifact hashes.
 - Ignored queued accelerometer callbacks after activity pause so stale sensor
   events cannot launch the sharesheet from the background.
 
