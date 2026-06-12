@@ -428,11 +428,12 @@ if ! cmp -s "$CI_WORKFLOW" "$EXPECTED_FILE"; then
 fi
 
 if [ ! -f "$HOSTED_ANDROID_PLAN" ] || \
-   ! grep -Fq "Status: Implementation Complete; Hosted Verification Pending" "$HOSTED_ANDROID_PLAN" || \
+   ! grep -Fq "Status: Completed" "$HOSTED_ANDROID_PLAN" || \
    ! grep -Fq "make check" "$HOSTED_ANDROID_PLAN" || \
    ! grep -Fq "OldTargetApi" "$HOSTED_ANDROID_PLAN" || \
-   ! grep -Fq "Exact-head pull-request workflow pending" "$HOSTED_ANDROID_PLAN"; then
-  printf '%s\n' "Hosted Android verification plan must record completed local evidence and pending hosted evidence." >&2
+   ! grep -Fq 'GitHub Actions `pull_request` run `27401082896` passed' "$HOSTED_ANDROID_PLAN" || \
+   ! grep -Fq "b28501b5f9567d8116af8f6955d96e5012eb84e8" "$HOSTED_ANDROID_PLAN"; then
+  printf '%s\n' "Hosted Android verification plan must record completed local and hosted evidence." >&2
   exit 1
 fi
 

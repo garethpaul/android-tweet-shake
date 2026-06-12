@@ -1,6 +1,6 @@
 # Hosted Android Verification
 
-## Status: Implementation Complete; Hosted Verification Pending
+## Status: Completed
 
 ## Context
 
@@ -33,7 +33,9 @@ Android verification that succeeds locally.
 - Confirmed eight hostile workflow, checker, documentation, and plan-status
   mutations are rejected.
 - Passed `git diff --check`.
-- Exact-head pull-request workflow pending after the implementation push.
+- GitHub Actions `pull_request` run `27401082896` passed the complete hosted
+  Android gate in 50 seconds for implementation commit
+  `b28501b5f9567d8116af8f6955d96e5012eb84e8`.
 
 ## Boundaries
 
