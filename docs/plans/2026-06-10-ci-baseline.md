@@ -19,6 +19,10 @@ and pull requests.
   reject hidden or additional workflow files.
 - Added repository-wide owner coverage and locked the fixed legacy manifest,
   source inventory, Gradle configuration, and wrapper executables.
+- Recorded the full production app-tree inventory and hashes, including Java,
+  XML resources, and images, to reject renamed or appended packaged payloads.
+- Rejected Gradle `buildSrc` so implicit plugin code cannot bypass the explicit
+  configuration inventory.
 
 ## Verification
 

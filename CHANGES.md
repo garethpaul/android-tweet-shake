@@ -6,6 +6,10 @@
   for CI, Gradle, verification, and Android app trust boundaries.
 - Locked the sharesheet app's workflow, manifest, source inventory, Gradle
   inputs, and wrapper hashes against hidden executable build inputs.
+- Made the complete production app tree byte-exact so additional outbound
+  intents, resources, renamed payloads, and image polyglots cannot land unseen.
+- Rejected Gradle `buildSrc` plugin shadowing as an implicit executable build
+  input outside the fixed legacy configuration.
 - Replaced retired Fabric/Twitter Kit login and composer integration with the
   Android sharesheet, removed credential placeholders and the network
   permission, and made the shake screen the launcher.

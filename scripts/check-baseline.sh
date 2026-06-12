@@ -72,6 +72,27 @@ if [ "$manifest_paths" != "$MANIFEST" ]; then
   exit 1
 fi
 
+cat > "$EXPECTED_FILE" <<'EOF'
+a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
+34d9a6ef436167def9c91161819d5253496be265e54abb3147ac9934efbdde6b  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+1a126d7ee9e268b45815318b0417d32f5db95c8a69bed9d055648e44256e9a87  app/src/main/java/gpj/tweetshake/ShakeDetector.java
+6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
+90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
+820e323f5506dc1dda3fad164e5fa0acd56a8266e4ea441db94e60fd9972d28a  app/src/main/res/mipmap-hdpi/ic_launcher.png
+90f5bc4bf1364152b1943933b6910bafc913e7a813de5c1b0ba4723e33e58975  app/src/main/res/mipmap-mdpi/ic_launcher.png
+552f9a01050827cc24c9bf50569fe8b0a121fb93297106e224986e7a4e9cc747  app/src/main/res/mipmap-xhdpi/ic_launcher.png
+c6e7620e6c5d9bf8020f7216117d8cb799f7936f232e28732443b1fe79521d6c  app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+24ae0c6e407500210f38b31fc40dedc9105b66b0543ef920e485fca20f7c5990  app/src/main/res/values-v21/styles.xml
+7b12b0133d18e5e90fa63f123c78437e1a6599510865b658cecfe545faa59e98  app/src/main/res/values/colors.xml
+ec06db62c6c767a44e49c767a19592e37c8a71ef076ee0780bb0410136f089d3  app/src/main/res/values/strings.xml
+2eeed855c9cc5993950b4722f90d32df4724d55a7e2e2470edbaa801c976805f  app/src/main/res/values/styles.xml
+EOF
+actual_app_inventory=$(cd "$ROOT_DIR" && find app/src/main -type f -print | LC_ALL=C sort | xargs sha256sum)
+if [ "$actual_app_inventory" != "$(cat "$EXPECTED_FILE")" ]; then
+  printf '%s\n' "Production app files must match the audited sharesheet inventory and hashes." >&2
+  exit 1
+fi
+
 if find "$ROOT_DIR/app" -type f \( -name '*.so' -o -name '*.dex' -o -name '*.jar' -o -name '*.aar' -o -name '*.apk' \) \
   ! -path "$ROOT_DIR/app/build/*" -print | grep -q .; then
   printf '%s\n' "Packaged Android binary payloads are outside the auditable source baseline." >&2
@@ -91,6 +112,11 @@ expected_gradle_paths=$(printf '%s\n' \
   "$SETTINGS_GRADLE" | LC_ALL=C sort)
 if [ "$gradle_paths" != "$expected_gradle_paths" ]; then
   printf '%s\n' "The fixed legacy build must not add executable Gradle configuration." >&2
+  exit 1
+fi
+
+if [ -e "$ROOT_DIR/buildSrc" ] || [ -L "$ROOT_DIR/buildSrc" ]; then
+  printf '%s\n' "Gradle buildSrc is an unapproved implicit executable build input." >&2
   exit 1
 fi
 

@@ -38,6 +38,11 @@ Helpful reports include:
 - Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
   repository with explicit CI, Gradle, verification, and app boundaries;
   repository rules should require owner approval and `Check / check`.
+- The complete production app tree is byte-exact, including Java, manifest,
+  XML resources, and images, so extra outbound intents or renamed packaged
+  payloads require an explicit reviewed baseline update.
+- Implicit Gradle `buildSrc` code is rejected in addition to the fixed explicit
+  Gradle configuration and recorded wrapper hashes.
 - Pinned, read-only GitHub Actions runs `make check` so sensor, sharesheet,
   manifest, dependency-removal, and legacy build guardrails stay enforced
   before merge.
