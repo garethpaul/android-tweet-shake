@@ -48,6 +48,8 @@
 - The retired Twitter/Fabric SDK, credential fields, login activity, direct network permission, and package-specific composer must not be restored.
 - Shakes open a user-confirmed Android `ACTION_SEND` chooser without querying or forcing a destination package.
 - Preserve duplicate-launch suppression, generic unavailable feedback, and lifecycle-safe accelerometer registration and cleanup.
+- Queued accelerometer callbacks must be ignored unless the activity is resumed;
+  mark it inactive before listener teardown in `onPause`.
 - The accelerometer is optional; devices without it must remain usable and show generic unavailable feedback instead of crashing.
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
 

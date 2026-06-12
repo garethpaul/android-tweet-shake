@@ -19,8 +19,10 @@ STRINGS="$ROOT_DIR/app/src/main/res/values/strings.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
 STYLES="$ROOT_DIR/app/src/main/res/values/styles.xml"
 STYLES_V21="$ROOT_DIR/app/src/main/res/values-v21/styles.xml"
+README="$ROOT_DIR/README.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 CODEOWNERS="$ROOT_DIR/.github/CODEOWNERS"
+FOREGROUND_CALLBACK_PLAN="$ROOT_DIR/docs/plans/2026-06-12-shake-foreground-callback-guard.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -74,7 +76,7 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-34d9a6ef436167def9c91161819d5253496be265e54abb3147ac9934efbdde6b  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+101f961356dd9dc3da76c813953733080ceb32e7e74b14876bdacb893f2abb0b  app/src/main/java/gpj/tweetshake/ShakeActivity.java
 1a126d7ee9e268b45815318b0417d32f5db95c8a69bed9d055648e44256e9a87  app/src/main/java/gpj/tweetshake/ShakeDetector.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
 90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
@@ -242,6 +244,62 @@ for sensor_contract in \
   fi
 done
 
+CHECK_SHAKE=$(sed -n '/private void checkShake(SensorEvent event)/,/private void showShareComposer()/p' "$SHAKE_ACTIVITY")
+ON_RESUME=$(sed -n '/protected void onResume()/,/protected void onPause()/p' "$SHAKE_ACTIVITY")
+ON_PAUSE=$(sed -n '/protected void onPause()/,/^    }/p' "$SHAKE_ACTIVITY")
+
+if [ "$(grep -Fc "private boolean activityResumed;" "$SHAKE_ACTIVITY" || true)" -ne 1 ]; then
+  printf '%s\n' "Shake activity must declare exactly one foreground-state field." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$CHECK_SHAKE" | grep -Fc "if (!activityResumed)" || true)" -ne 1 ]; then
+  printf '%s\n' "Queued shake callbacks must be ignored outside the resumed activity state." >&2
+  exit 1
+fi
+
+CHECK_GUARD_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "if (!activityResumed)" | cut -d: -f1)
+CHECK_EVENT_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "event == null" | cut -d: -f1)
+if [ "$CHECK_GUARD_LINE" -ge "$CHECK_EVENT_LINE" ]; then
+  printf '%s\n' "Foreground state must be checked before reading queued sensor callbacks." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$ON_RESUME" | grep -Fc "activityResumed = true;" || true)" -ne 1 ]; then
+  printf '%s\n' "Shake activity must mark itself resumed before processing callbacks." >&2
+  exit 1
+fi
+
+RESUME_SUPER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "super.onResume();" | cut -d: -f1)
+RESUME_ACTIVE_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "activityResumed = true;" | cut -d: -f1)
+RESUME_REGISTER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "sensorRegistered = sensorManager.registerListener(" | cut -d: -f1)
+if [ "$RESUME_SUPER_LINE" -ge "$RESUME_ACTIVE_LINE" ] || \
+   [ "$RESUME_ACTIVE_LINE" -ge "$RESUME_REGISTER_LINE" ]; then
+  printf '%s\n' "Shake activity must become active after superclass resume and before listener registration." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$ON_PAUSE" | grep -Fc "activityResumed = false;" || true)" -ne 1 ]; then
+  printf '%s\n' "Shake activity must become inactive before listener teardown." >&2
+  exit 1
+fi
+
+PAUSE_INACTIVE_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "activityResumed = false;" | cut -d: -f1)
+PAUSE_UNREGISTER_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "sensorManager.unregisterListener(this);" | cut -d: -f1)
+PAUSE_SUPER_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "super.onPause();" | cut -d: -f1)
+if [ "$PAUSE_INACTIVE_LINE" -ge "$PAUSE_UNREGISTER_LINE" ] || \
+   [ "$PAUSE_UNREGISTER_LINE" -ge "$PAUSE_SUPER_LINE" ]; then
+  printf '%s\n' "Shake activity must become inactive before listener teardown and superclass pause." >&2
+  exit 1
+fi
+
+if [ ! -f "$FOREGROUND_CALLBACK_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$FOREGROUND_CALLBACK_PLAN" || \
+   ! grep -Fq "make check" "$FOREGROUND_CALLBACK_PLAN"; then
+  printf '%s\n' "Shake foreground callback plan must record completed make check verification." >&2
+  exit 1
+fi
+
 for detector_contract in \
   "static final float GRAVITY_EARTH = 9.80665f" \
   "static final float SHAKE_THRESHOLD_GRAVITY = 2.0f" \
@@ -254,6 +312,11 @@ for detector_contract in \
     exit 1
   fi
 done
+
+if ! grep -Fq "Queued accelerometer callbacks are ignored after the activity pauses" "$README"; then
+  printf '%s\n' "README must document the foreground shake callback guard." >&2
+  exit 1
+fi
 
 for test_contract in \
   "ignoresMovementBelowThreshold" \

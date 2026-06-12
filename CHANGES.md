@@ -1,5 +1,10 @@
 # Android Tweet Shake Changes
 
+## 2026-06-12
+
+- Ignored queued accelerometer callbacks after activity pause so stale sensor
+  events cannot launch the sharesheet from the background.
+
 ## 2026-06-10
 
 - Disabled persisted checkout credentials and added repository-wide ownership
