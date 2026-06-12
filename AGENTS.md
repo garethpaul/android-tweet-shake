@@ -27,7 +27,7 @@
 
 ## Coding conventions
 
-- Language mix noted in the README: Java (5), shell (1).
+- Language mix noted in the README: Java (4), shell (1).
 - Use the checked-in Gradle wrapper for Android builds when an SDK is configured.
 
 ## Testing guidance
@@ -45,11 +45,10 @@
 
 ## Safety and gotchas
 
-- Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
-- Committed Twitter and Fabric credential placeholders must stay empty. Real keys, tokens, signing files, and machine-local Fabric properties belong outside Git.
-- Local builds with empty Twitter credentials stop SDK initialization and show generic unavailable feedback.
-- Twitter login failures show a generic resource-backed message and do not log exception or session details.
-- Missing Twitter login button wiring shows a generic resource-backed message and skips activity-result forwarding instead of crashing.
+- The retired Twitter/Fabric SDK, credential fields, login activity, direct network permission, and package-specific composer must not be restored.
+- Shakes open a user-confirmed Android `ACTION_SEND` chooser without querying or forcing a destination package.
+- Preserve duplicate-launch suppression, generic unavailable feedback, and lifecycle-safe accelerometer registration and cleanup.
+- The accelerometer is optional; devices without it must remain usable and show generic unavailable feedback instead of crashing.
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
 
 ## Agent workflow

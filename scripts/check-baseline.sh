@@ -4,6 +4,12 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP_BUILD="$ROOT_DIR/app/build.gradle"
 ROOT_BUILD="$ROOT_DIR/build.gradle"
+SETTINGS_GRADLE="$ROOT_DIR/settings.gradle"
+GRADLE_PROPERTIES="$ROOT_DIR/gradle.properties"
+WRAPPER_PROPERTIES="$ROOT_DIR/gradle/wrapper/gradle-wrapper.properties"
+GRADLEW="$ROOT_DIR/gradlew"
+GRADLEW_BAT="$ROOT_DIR/gradlew.bat"
+WRAPPER_JAR="$ROOT_DIR/gradle/wrapper/gradle-wrapper.jar"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
@@ -13,11 +19,21 @@ STRINGS="$ROOT_DIR/app/src/main/res/values/strings.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
 STYLES="$ROOT_DIR/app/src/main/res/values/styles.xml"
 STYLES_V21="$ROOT_DIR/app/src/main/res/values-v21/styles.xml"
-README="$ROOT_DIR/README.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
-CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
-SHARESHEET_PLAN="$ROOT_DIR/docs/plans/2026-06-10-platform-sharesheet.md"
-SHARE_LAUNCH_PLAN="$ROOT_DIR/docs/plans/2026-06-10-sharesheet-launch-compatibility.md"
+CODEOWNERS="$ROOT_DIR/.github/CODEOWNERS"
+EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
+trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
+
+require_sha256() {
+  file=$1
+  expected=$2
+  message=$3
+
+  if [ "$(sha256sum "$file" | awk '{print $1}')" != "$expected" ]; then
+    printf '%s\n' "$message" >&2
+    exit 1
+  fi
+}
 
 for file in \
   "$APP_BUILD" \
@@ -33,6 +49,69 @@ for file in \
     exit 1
   fi
 done
+
+if git -C "$ROOT_DIR" ls-files -s | awk '$1 == "120000" { found = 1 } END { exit found ? 0 : 1 }'; then
+  printf '%s\n' "Tracked symbolic links are outside the audited repository baseline." >&2
+  exit 1
+fi
+
+source_paths=$(find "$ROOT_DIR/app/src" -type f \( -name '*.java' -o -name '*.kt' \) -print | LC_ALL=C sort)
+expected_source_paths=$(printf '%s\n' \
+  "$ROOT_DIR/app/src/androidTest/java/gpj/tweetshake/ApplicationTest.java" \
+  "$SHAKE_ACTIVITY" \
+  "$SHAKE_DETECTOR" \
+  "$SHAKE_DETECTOR_TEST" | LC_ALL=C sort)
+if [ "$source_paths" != "$expected_source_paths" ]; then
+  printf '%s\n' "Android source inventory must match the audited sharesheet app." >&2
+  exit 1
+fi
+
+manifest_paths=$(find "$ROOT_DIR/app/src" -type f -name 'AndroidManifest.xml' -print | LC_ALL=C sort)
+if [ "$manifest_paths" != "$MANIFEST" ]; then
+  printf '%s\n' "The fixed legacy app must keep one audited Android manifest." >&2
+  exit 1
+fi
+
+if find "$ROOT_DIR/app" -type f \( -name '*.so' -o -name '*.dex' -o -name '*.jar' -o -name '*.aar' -o -name '*.apk' \) \
+  ! -path "$ROOT_DIR/app/build/*" -print | grep -q .; then
+  printf '%s\n' "Packaged Android binary payloads are outside the auditable source baseline." >&2
+  exit 1
+fi
+
+gradle_paths=$(find "$ROOT_DIR" \
+  -path "$ROOT_DIR/.git" -prune -o \
+  -path "$ROOT_DIR/app/build" -prune -o \
+  -type f \( -name '*.gradle' -o -name 'gradle.properties' -o -name 'gradle-wrapper.properties' \) \
+  -print | LC_ALL=C sort)
+expected_gradle_paths=$(printf '%s\n' \
+  "$APP_BUILD" \
+  "$ROOT_BUILD" \
+  "$GRADLE_PROPERTIES" \
+  "$WRAPPER_PROPERTIES" \
+  "$SETTINGS_GRADLE" | LC_ALL=C sort)
+if [ "$gradle_paths" != "$expected_gradle_paths" ]; then
+  printf '%s\n' "The fixed legacy build must not add executable Gradle configuration." >&2
+  exit 1
+fi
+
+require_sha256 "$APP_BUILD" "acef00c121527e0ce476bad5b410ef6b06a0c43c7654c8f87a9b3d42d0794471" \
+  "App Gradle configuration must match the audited sharesheet baseline."
+require_sha256 "$ROOT_BUILD" "14a3eb90ed06d4a557c987fe38659fc025fff85a4dee555990fe58b4a85a59e5" \
+  "Root Gradle configuration must match the audited sharesheet baseline."
+require_sha256 "$SETTINGS_GRADLE" "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f" \
+  "Gradle settings must keep the single audited app module."
+require_sha256 "$GRADLE_PROPERTIES" "1cce242f70d5d96dc4415d2258063984df33e44fa37a3daa75d7a2b22c14f23d" \
+  "Gradle properties must match the audited legacy baseline."
+require_sha256 "$WRAPPER_PROPERTIES" "62972b41a2589480b640d138653b084d1422edc56e5740235dcfee83712c08a5" \
+  "Gradle wrapper properties must match the audited legacy baseline."
+require_sha256 "$MANIFEST" "a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e" \
+  "Android manifest must match the audited no-network sharesheet baseline."
+require_sha256 "$GRADLEW" "874d75d37bf38c810a8314e0b2f78a3c77fce9437963ae33cec8543d92662b61" \
+  "The Unix Gradle wrapper must match the recorded trusted hash."
+require_sha256 "$GRADLEW_BAT" "c13c6e91b9a517783976de213d46398c661ea9e17651376d7301e839eaedcc62" \
+  "The Windows Gradle wrapper must match the recorded trusted hash."
+require_sha256 "$WRAPPER_JAR" "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14" \
+  "The Gradle wrapper JAR must match the recorded trusted hash."
 
 if ! grep -Fq "url 'https://repo1.maven.org/maven2'" "$ROOT_BUILD"; then
   printf '%s\n' "Build repositories must use HTTPS Maven Central." >&2
@@ -57,6 +136,12 @@ fi
 if grep -Eiq 'fabric|com\.twitter|tweetcomposer|twitterlogin|twitter_key|twitter_secret|/opt/twitter' \
   "$APP_BUILD" "$ROOT_DIR/app/proguard-rules.pro" "$MANIFEST" "$SHAKE_ACTIVITY" "$STRINGS"; then
   printf '%s\n' "Retired Fabric and Twitter Kit integration must not be restored." >&2
+  exit 1
+fi
+
+if find "$ROOT_DIR/app/src" -type f \( -name '*.java' -o -name '*.kt' \) \
+  -exec grep -E 'java\.net|android\.net|HttpURLConnection|URLConnection|Socket|WebView|org\.apache\.http|okhttp|retrofit' {} + | grep -q .; then
+  printf '%s\n' "Sharesheet source must not add direct network clients." >&2
   exit 1
 fi
 
@@ -196,39 +281,72 @@ if ! grep -Fq '<color name="tweet_shake_background">#31AA39</color>' "$COLORS" |
   exit 1
 fi
 
-for readme_contract in \
-  "make check" \
-  "GitHub Actions" \
-  'Android sharesheet' \
-  'does not request the `INTERNET` permission' \
-  "register the accelerometer listener"; do
-  if ! grep -Fq "$readme_contract" "$README"; then
-    printf '%s\n' "README must document contract: $readme_contract" >&2
-    exit 1
-  fi
-done
-
 if [ ! -f "$CI_WORKFLOW" ]; then
   printf '%s\n' "GitHub Actions check workflow is missing." >&2
   exit 1
 fi
 
-for workflow_contract in \
-  "permissions:" \
-  "contents: read" \
-  "runs-on: ubuntu-24.04" \
-  "cancel-in-progress: true" \
-  "timeout-minutes: 5" \
-  "workflow_dispatch:" \
-  "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" \
-  'ANDROID_HOME: ""' \
-  'ANDROID_SDK_ROOT: ""' \
-  "run: make check"; do
-  if ! grep -Fq "$workflow_contract" "$CI_WORKFLOW"; then
-    printf '%s\n' "GitHub Actions check workflow must keep contract: $workflow_contract" >&2
-    exit 1
-  fi
-done
+workflow_paths=$(find "$ROOT_DIR/.github/workflows" -type f \( -name '*.yml' -o -name '*.yaml' \) -print | LC_ALL=C sort)
+if [ "$workflow_paths" != "$CI_WORKFLOW" ]; then
+  printf '%s\n' "The canonical check workflow must be the only GitHub Actions workflow." >&2
+  exit 1
+fi
+
+cat > "$EXPECTED_FILE" <<'EOF'
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Run SDK-free baseline
+        run: make check
+        env:
+          ANDROID_HOME: ""
+          ANDROID_SDK_ROOT: ""
+EOF
+if ! cmp -s "$CI_WORKFLOW" "$EXPECTED_FILE"; then
+  printf '%s\n' "GitHub Actions check workflow must match the canonical credential-free contract." >&2
+  exit 1
+fi
+
+cat > "$EXPECTED_FILE" <<'EOF'
+* @garethpaul
+/.github/CODEOWNERS @garethpaul
+/.github/workflows/ @garethpaul
+/Makefile @garethpaul
+/scripts/check-baseline.sh @garethpaul
+/build.gradle @garethpaul
+/settings.gradle @garethpaul
+/gradle.properties @garethpaul
+/gradle/ @garethpaul
+/gradlew @garethpaul
+/gradlew.bat @garethpaul
+/app/ @garethpaul
+EOF
+if [ ! -f "$CODEOWNERS" ] || ! cmp -s "$CODEOWNERS" "$EXPECTED_FILE"; then
+  printf '%s\n' "CODEOWNERS must protect the repository and explicit trust boundaries." >&2
+  exit 1
+fi
 
 for make_contract in \
   'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' \
@@ -242,22 +360,6 @@ done
 
 if grep -Eq '/(home|Users)/[^/]+/.+android-sdk' "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must not embed a maintainer-specific Android SDK path." >&2
-  exit 1
-fi
-
-if [ ! -f "$CI_PLAN" ] || ! grep -Fq "Status: Completed" "$CI_PLAN" || ! grep -Fq "make check" "$CI_PLAN"; then
-  printf '%s\n' "Tweet Shake CI plan must record completed make check verification." >&2
-  exit 1
-fi
-
-if [ ! -f "$SHARESHEET_PLAN" ] || ! grep -Fq "Status: Completed" "$SHARESHEET_PLAN" || ! grep -Fq "make check" "$SHARESHEET_PLAN"; then
-  printf '%s\n' "Platform sharesheet plan must record completed make check verification." >&2
-  exit 1
-fi
-
-if [ ! -f "$SHARE_LAUNCH_PLAN" ] || ! grep -Fq "Status: Completed" "$SHARE_LAUNCH_PLAN" || \
-   ! grep -Fq "make check" "$SHARE_LAUNCH_PLAN"; then
-  printf '%s\n' "Sharesheet launch compatibility plan must record completed make check verification." >&2
   exit 1
 fi
 

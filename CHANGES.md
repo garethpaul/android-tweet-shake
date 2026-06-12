@@ -2,6 +2,10 @@
 
 ## 2026-06-10
 
+- Disabled persisted checkout credentials and added repository-wide ownership
+  for CI, Gradle, verification, and Android app trust boundaries.
+- Locked the sharesheet app's workflow, manifest, source inventory, Gradle
+  inputs, and wrapper hashes against hidden executable build inputs.
 - Replaced retired Fabric/Twitter Kit login and composer integration with the
   Android sharesheet, removed credential placeholders and the network
   permission, and made the shake screen the launcher.

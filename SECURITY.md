@@ -32,6 +32,12 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: build.gradle, gradle.properties. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
+- The app uses the user-confirmed Android sharesheet and requests no direct
+  network permission. Retired Twitter/Fabric credentials and SDK code must not
+  be restored.
+- Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
+  repository with explicit CI, Gradle, verification, and app boundaries;
+  repository rules should require owner approval and `Check / check`.
 - Pinned, read-only GitHub Actions runs `make check` so sensor, sharesheet,
   manifest, dependency-removal, and legacy build guardrails stay enforced
   before merge.
