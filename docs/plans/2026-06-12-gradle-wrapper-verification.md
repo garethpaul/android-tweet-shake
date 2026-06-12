@@ -71,4 +71,9 @@ SDK, dependency, gesture, UI, sharesheet, emulator, and device changes.
 
 ## Hosted Verification
 
-Hosted evidence will be recorded after the exact implementation head passes.
+- On implementation head `4aaa9517eb17bef8ddaca355a78378cf4268b1d3`,
+  pull-request `Check` run `27441424036` passed the complete Java 8/API 22 gate.
+- CodeQL run `27441422295` remains in progress: actions job `81116159145`
+  passed, while java-kotlin job `81116159106` is nonterminal.
+- PR #2 is open and mergeable at that exact head. Tracker promotion and an
+  evidence-only completion commit remain deferred until CodeQL is terminal-green.
