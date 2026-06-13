@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Recovered from missing activities and permission-rejected chooser launches
+  through one state-reset and generic-feedback path.
 - Made first-shake debounce state explicit so maximum elapsed-realtime values do
   not overflow timestamp arithmetic.
 - Rejected negative and backward debounce timestamps without replacing the last

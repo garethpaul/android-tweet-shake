@@ -1,13 +1,13 @@
 ---
 title: Share Security Exception Recovery
 type: fix
-status: planned
+status: completed
 date: 2026-06-13
 ---
 
 # Share Security Exception Recovery
 
-## Status: Planned
+## Status: Completed
 
 ## Problem Frame
 
@@ -37,8 +37,9 @@ must cover those expected launch failures without catching every runtime error.
 
 **File:** `app/src/main/java/gpj/tweetshake/ShakeActivity.java`
 
-Handle `SecurityException` alongside `ActivityNotFoundException`, clear
-`shareInProgress`, and show the existing generic share-unavailable feedback.
+Handle `SecurityException` alongside `ActivityNotFoundException` through one
+shared recovery method that clears `shareInProgress` and shows the existing
+generic share-unavailable feedback.
 
 ### U2: Protect The Recovery Contract
 
@@ -67,7 +68,17 @@ hostile mutation evidence.
 
 ## Verification
 
-Pending implementation and execution.
+- SDK-backed `make check` passed in an isolated tracked-file copy, including
+  legacy lint, both JVM unit-test variants, and debug APK assembly. The legacy
+  target SDK retained its single documented `OldTargetApi` warning.
+- Nine hostile mutations were rejected after source-mutation cases refreshed
+  the audited production hash: removing either narrow catch, substituting
+  `RuntimeException` or an `Error` class, bypassing shared recovery, removing
+  the state reset or feedback, deleting guidance, and reverting plan status.
+- SDK-backed `make check` then passed from the canonical worktree and through
+  `make -C` from an external working directory.
+- Emulator/device chooser permission rejection was not exercised; build and
+  fail-closed source contracts verify the recovery path in this legacy sample.
 
 ## Sources
 

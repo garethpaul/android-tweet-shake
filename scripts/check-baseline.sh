@@ -28,6 +28,7 @@ HOSTED_ANDROID_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-android-verification
 CI_BASELINE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 WRAPPER_PLAN="$ROOT_DIR/docs/plans/2026-06-12-gradle-wrapper-verification.md"
 DEBOUNCE_TIMESTAMP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-shake-debounce-timestamp-guard.md"
+SHARE_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-13-share-security-exception-recovery.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -81,7 +82,7 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-101f961356dd9dc3da76c813953733080ceb32e7e74b14876bdacb893f2abb0b  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+e712bcac817d4b5a3605e8fe4a66d3e7184d8e94647822752796cd8449f87ebb  app/src/main/java/gpj/tweetshake/ShakeActivity.java
 d0e77a3a107080adae2503b121f41c1d388e3efd4a3b03f51057a8c9fb0c7a24  app/src/main/java/gpj/tweetshake/ShakeDetector.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
 90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
@@ -218,11 +219,43 @@ for share_contract in \
   "Intent.createChooser(" \
   "R.string.share_chooser_title" \
   "catch (ActivityNotFoundException exception)" \
+  "catch (SecurityException exception)" \
+  "private void recoverFromShareLaunchFailure()" \
   "shareInProgress = true" \
   "shareInProgress = false" \
   "R.string.share_unavailable"; do
   if ! grep -Fq "$share_contract" "$SHAKE_ACTIVITY"; then
     printf '%s\n' "Missing platform sharesheet contract: $share_contract" >&2
+    exit 1
+  fi
+done
+
+SHARE_COMPOSER=$(sed -n \
+  '/private void showShareComposer()/,/private void showSensorUnavailable()/p' \
+  "$SHAKE_ACTIVITY")
+if [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "recoverFromShareLaunchFailure();")" -ne 2 ] || \
+   [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "shareInProgress = false;")" -ne 1 ] || \
+   [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "showShareUnavailable();")" -ne 1 ]; then
+  printf '%s\n' "Both narrow sharesheet launch catches must use one reviewed recovery path." >&2
+  exit 1
+fi
+if printf '%s\n' "$SHARE_COMPOSER" | \
+    grep -Eq 'catch \((RuntimeException|Throwable|[[:alnum:]_.$]*Error)([[:space:]]|\))'; then
+  printf '%s\n' "Sharesheet launch must not catch broad runtime or fatal exceptions." >&2
+  exit 1
+fi
+if [ ! -f "$SHARE_SECURITY_PLAN" ] || \
+   ! grep -Fq "## Status: Completed" "$SHARE_SECURITY_PLAN" || \
+   ! grep -Fq "make check" "$SHARE_SECURITY_PLAN" || \
+   ! grep -Fq "hostile mutations" "$SHARE_SECURITY_PLAN"; then
+  printf '%s\n' "Share security-exception plan must record completed verification." >&2
+  exit 1
+fi
+for share_security_doc in "$ROOT_DIR/AGENTS.md" "$README" "$SECURITY" \
+  "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! tr '\n' ' ' < "$share_security_doc" | tr -s '[:space:]' ' ' | \
+      grep -Fiq "permission-rejected chooser launches"; then
+    printf '%s\n' "$share_security_doc must document permission-rejected chooser launches." >&2
     exit 1
   fi
 done

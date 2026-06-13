@@ -90,6 +90,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Sharesheet launch follows Android's launch-and-catch pattern without a
   package-visibility preflight and rejects duplicate sensor events while a
   chooser is already opening.
+- Missing activities and permission-rejected chooser launches clear the
+  in-progress flag and show the same generic unavailable feedback.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 The canonical GitHub Actions workflow installs Android API 22 and build-tools

@@ -68,9 +68,15 @@ public class ShakeActivity extends Activity implements SensorEventListener {
                     shareIntent,
                     getString(R.string.share_chooser_title)));
         } catch (ActivityNotFoundException exception) {
-            shareInProgress = false;
-            showShareUnavailable();
+            recoverFromShareLaunchFailure();
+        } catch (SecurityException exception) {
+            recoverFromShareLaunchFailure();
         }
+    }
+
+    private void recoverFromShareLaunchFailure() {
+        shareInProgress = false;
+        showShareUnavailable();
     }
 
     private void showSensorUnavailable() {

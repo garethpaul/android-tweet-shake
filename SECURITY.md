@@ -35,6 +35,8 @@ Helpful reports include:
 - The app uses the user-confirmed Android sharesheet and requests no direct
   network permission. Retired Twitter/Fabric credentials and SDK code must not
   be restored.
+- Missing activities and permission-rejected chooser launches recover through
+  generic feedback without retaining duplicate-launch suppression.
 - Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
   repository with explicit CI, Gradle, verification, and app boundaries;
   repository rules should require owner approval and `Check / check`.

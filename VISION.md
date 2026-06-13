@@ -24,6 +24,8 @@ Priority:
 - Keep missing sensors and listener registration failures visible to the user
 - Guard sharesheet launch failures and duplicate chooser launches without
   package-visibility preflight queries
+- Recover from missing activities and permission-rejected chooser launches
+  without leaving duplicate-launch suppression active
 - Keep retired Fabric/Twitter dependencies, credentials, and network permission removed
 - Maintain SDK-free `make check` coverage for sensor, sharesheet, and build guardrails
 - Keep GitHub Actions aligned with the SDK-free `make check` baseline
