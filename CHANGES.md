@@ -1,5 +1,12 @@
 # Android Tweet Shake Changes
 
+## 2026-06-13
+
+- Made first-shake debounce state explicit so maximum elapsed-realtime values do
+  not overflow timestamp arithmetic.
+- Rejected negative and backward debounce timestamps without replacing the last
+  accepted shake time.
+
 ## 2026-06-12
 
 - Regenerated the wrapper bootstrap with official Gradle 8.14.5 tooling while

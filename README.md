@@ -78,6 +78,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   build guardrails.
 - Shake debounce uses Android's monotonic elapsed realtime clock so wall-clock
   changes do not affect shake timing.
+- Debounce timestamp handling is overflow-safe at the maximum elapsed-time value;
+  negative and backward timestamps are rejected without consuming accepted state.
 - Overflowed acceleration magnitude is rejected before shake debounce so
   implausibly large finite sensor values cannot trigger composition.
 - Missing shake sensor support shows generic unavailable feedback instead of
@@ -123,9 +125,10 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   small detector, compares acceleration magnitude against the configured 2.0g
   threshold, rejects non-finite accelerometer values without consuming debounce
   state, rejects overflowed acceleration magnitude before debounce, uses
-  monotonic elapsed realtime for shake debounce timing, keeps the resource lint
-  gate clean, pins compatible legacy build tooling, and removes generated IDE
-  metadata from version control. Missing accelerometer support, listener
+  monotonic elapsed realtime for shake debounce timing, safely handles timestamp
+  boundaries without replacing accepted state, keeps the resource lint gate
+  clean, pins compatible legacy build tooling, and removes generated IDE metadata
+  from version control. Missing accelerometer support, listener
   registration failure, and sharesheet launch failure surface generic messages.
 - Future work should add hardware or emulator verification for shake and
   chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
@@ -144,6 +147,8 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   monotonic shake debounce timing contract.
 - See `docs/plans/2026-06-09-shake-magnitude-overflow-guard.md` for the
   overflowed acceleration magnitude guard.
+- See `docs/plans/2026-06-13-shake-debounce-timestamp-guard.md` for overflow-safe
+  debounce timestamp handling.
 - See `docs/plans/2026-06-09-tweet-shake-make-gate-targets.md` for the root
   lint, test, and build gate contract.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions

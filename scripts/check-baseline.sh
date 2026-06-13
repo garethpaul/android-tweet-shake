@@ -27,6 +27,7 @@ FOREGROUND_CALLBACK_PLAN="$ROOT_DIR/docs/plans/2026-06-12-shake-foreground-callb
 HOSTED_ANDROID_PLAN="$ROOT_DIR/docs/plans/2026-06-12-hosted-android-verification.md"
 CI_BASELINE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 WRAPPER_PLAN="$ROOT_DIR/docs/plans/2026-06-12-gradle-wrapper-verification.md"
+DEBOUNCE_TIMESTAMP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-shake-debounce-timestamp-guard.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -81,7 +82,7 @@ fi
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
 101f961356dd9dc3da76c813953733080ceb32e7e74b14876bdacb893f2abb0b  app/src/main/java/gpj/tweetshake/ShakeActivity.java
-1a126d7ee9e268b45815318b0417d32f5db95c8a69bed9d055648e44256e9a87  app/src/main/java/gpj/tweetshake/ShakeDetector.java
+d0e77a3a107080adae2503b121f41c1d388e3efd4a3b03f51057a8c9fb0c7a24  app/src/main/java/gpj/tweetshake/ShakeDetector.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
 90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
 820e323f5506dc1dda3fad164e5fa0acd56a8266e4ea441db94e60fd9972d28a  app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -304,18 +305,37 @@ if [ ! -f "$FOREGROUND_CALLBACK_PLAN" ] || \
   exit 1
 fi
 
+if [ ! -f "$DEBOUNCE_TIMESTAMP_PLAN" ] || \
+   ! grep -Fq "status: completed" "$DEBOUNCE_TIMESTAMP_PLAN" || \
+   ! grep -Fq "## Status: Completed" "$DEBOUNCE_TIMESTAMP_PLAN" || \
+   ! grep -Fq 'SDK-backed `make check` passed' "$DEBOUNCE_TIMESTAMP_PLAN" || \
+   ! grep -Fq "Ten isolated hostile mutations were rejected" "$DEBOUNCE_TIMESTAMP_PLAN"; then
+  printf '%s\n' "Shake debounce timestamp plan must record completed status and verification." >&2
+  exit 1
+fi
+
 for detector_contract in \
   "static final float GRAVITY_EARTH = 9.80665f" \
   "static final float SHAKE_THRESHOLD_GRAVITY = 2.0f" \
   "static final long SHAKE_DEBOUNCE_MILLIS = 200L" \
+  "private boolean hasAcceptedShake;" \
   "if (!hasFiniteAcceleration(x, y, z))" \
   "if (!isFinite(accelerationMagnitudeSquared))" \
-  "nowMillis - lastShakeAtMillis < SHAKE_DEBOUNCE_MILLIS"; do
+  "if (nowMillis < 0L)" \
+  "if (hasAcceptedShake" \
+  "nowMillis < lastShakeAtMillis" \
+  "nowMillis - lastShakeAtMillis < SHAKE_DEBOUNCE_MILLIS" \
+  "hasAcceptedShake = true;"; do
   if ! grep -Fq "$detector_contract" "$SHAKE_DETECTOR"; then
     printf '%s\n' "Missing tested shake detector contract: $detector_contract" >&2
     exit 1
   fi
 done
+
+if grep -Fq "lastShakeAtMillis = -SHAKE_DEBOUNCE_MILLIS" "$SHAKE_DETECTOR"; then
+  printf '%s\n' "Shake detector must not use overflow-prone negative timestamp initialization." >&2
+  exit 1
+fi
 
 if ! grep -Fq "Queued accelerometer callbacks are ignored after the activity pauses" "$README"; then
   printf '%s\n' "README must document the foreground shake callback guard." >&2
@@ -329,6 +349,9 @@ for test_contract in \
   "invalidAccelerationDoesNotConsumeDebounceWindow" \
   "ignoresOverflowAccelerationMagnitude" \
   "triggersAboveThreshold" \
+  "firstShakeAtMaximumTimestampTriggers" \
+  "backwardTimestampDoesNotReplaceAcceptedShakeTime" \
+  "negativeTimestampDoesNotConsumeDebounceWindow" \
   "debouncesConsecutiveShakes" \
   "allowsShakeAfterCooldown"; do
   if ! grep -Fq "$test_contract" "$SHAKE_DETECTOR_TEST"; then
