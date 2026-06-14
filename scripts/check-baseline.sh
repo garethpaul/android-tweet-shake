@@ -33,6 +33,7 @@ DEBOUNCE_TIMESTAMP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-shake-debounce-timestam
 SHARE_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-13-share-security-exception-recovery.md"
 REGISTRATION_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-14-shake-registration-ownership-guard.md"
 PORTABLE_DETECTOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-portable-shake-detector-tests.md"
+DEVICE_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -119,6 +120,55 @@ if ! grep -Fq 'Portable detector tests: `scripts/test-shake-detector.sh`' "$ROOT
   printf '%s\n' "Portable shake detector documentation is incomplete." >&2
   exit 1
 fi
+
+for required_device_path in "$ROOT_DIR/DEVICE_VERIFICATION.md" "$DEVICE_VERIFICATION_PLAN"; do
+  if [ ! -f "$required_device_path" ]; then
+    printf '%s\n' "Required Tweet Shake device verification file is missing: ${required_device_path#"$ROOT_DIR/"}" >&2
+    exit 1
+  fi
+done
+
+for device_contract in \
+  'commit SHA and pull request' \
+  'synthetic share text' \
+  'Accelerometer unavailable' \
+  'Listener registration failure' \
+  'Below-threshold motion' \
+  'Threshold shake' \
+  'Rapid repeated shakes' \
+  'Debounce boundary' \
+  'Pause before callback' \
+  'Resume registration' \
+  'Chooser already opening' \
+  'Missing share activity' \
+  'Permission-rejected launch' \
+  'Do not convert `not run` into passing evidence.' \
+  'device identifiers, sensor dumps, account names' \
+  'every Android, accelerometer, chooser, and lifecycle row as unexecuted'; do
+  if ! grep -Fq "$device_contract" "$ROOT_DIR/DEVICE_VERIFICATION.md"; then
+    printf '%s\n' "Tweet Shake device checklist must keep contract: $device_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq 'DEVICE_VERIFICATION.md' "$README" || \
+   ! grep -Fq 'explicit unexecuted rows' "$README" || \
+   ! grep -Fq 'Tweet Shake device verification matrix' "$ROOT_DIR/VISION.md" || \
+   ! grep -Fq 'every runtime row explicitly unexecuted' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' 'Repository guidance must document the unexecuted Tweet Shake device matrix.' >&2
+  exit 1
+fi
+
+for device_plan_contract in \
+  'Status: Completed' \
+  'make check' \
+  'hostile mutations' \
+  'No emulator, accelerometer injection, physical device, share target, or live chooser scenario was executed'; do
+  if ! grep -Fq "$device_plan_contract" "$DEVICE_VERIFICATION_PLAN"; then
+    printf '%s\n' "Tweet Shake device plan must keep completion evidence: $device_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if git -C "$ROOT_DIR" ls-files -s | awk '$1 == "120000" { found = 1 } END { exit found ? 0 : 1 }'; then
   printf '%s\n' "Tracked symbolic links are outside the audited repository baseline." >&2

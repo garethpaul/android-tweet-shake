@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- Added an exact-commit Tweet Shake device verification matrix for sensor
+  availability, threshold and debounce behavior, registration ownership,
+  lifecycle callbacks, chooser suppression and failure recovery, and privacy-safe evidence, with every runtime row explicitly unexecuted.
 - Added portable host regression tests for shake detection so core behavior is
   exercised even when the Android SDK is unavailable.
 - Required current successful accelerometer registration, in addition to

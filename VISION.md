@@ -31,6 +31,9 @@ Priority:
 - Keep GitHub Actions aligned with the SDK-free `make check` baseline
 - Keep root lint, test, and build gates wired to the Gradle project
 - Keep the legacy Gradle runtime behind a checksum-verified generated wrapper
+- Keep exact-commit Tweet Shake device verification matrix evidence separate
+  from portable checks, with unexecuted sensor, chooser, and lifecycle rows
+  explicit
 
 Next priorities:
 
@@ -38,6 +41,8 @@ Next priorities:
 - Evaluate Gradle runtime, SDK, and dependency modernization together in a
   dedicated compatibility pass; wrapper hardening is separate
 - Add activity-level tests after the Android toolchain is modernized
+- Execute the device verification matrix with synthetic text and privacy-safe
+  sensor, lifecycle, and chooser evidence
 
 Contribution rules:
 

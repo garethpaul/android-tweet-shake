@@ -99,6 +99,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   in-progress flag and show the same generic unavailable feedback.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
+Use [`DEVICE_VERIFICATION.md`](DEVICE_VERIFICATION.md) for the exact-commit
+Tweet Shake matrix. It covers sensor availability, threshold and debounce
+behavior, registration ownership, lifecycle callbacks, chooser suppression and
+failure recovery, privacy-safe evidence, and explicit unexecuted rows.
+
 The canonical GitHub Actions workflow installs Android API 22 and build-tools
 24.0.3, selects Java 8, and runs the complete `make check` gate. The legacy
 target SDK produces one documented `OldTargetApi` compatibility warning.
@@ -164,6 +169,8 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   hosted Android lint, test, and build gate.
 - See `docs/plans/2026-06-10-platform-sharesheet.md` for the migration away
   from retired Fabric and Twitter Kit dependencies.
+- See `docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md`
+  for the device evidence matrix and runtime non-claims.
 
 Earlier login and credential plans remain in `docs/plans/` as historical
 context for the retired integration.

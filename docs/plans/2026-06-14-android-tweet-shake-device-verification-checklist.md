@@ -1,6 +1,6 @@
 # Android Tweet Shake Device Verification Checklist
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -32,4 +32,10 @@ emulator evidence for the exact implementation commit.
 
 ## Verification
 
-- Pending implementation and bounded repository validation.
+- `sh -n scripts/check-baseline.sh` and the focused baseline checker passed.
+- `make check` passed from the repository and from an external working
+  directory with the available Android API 22 toolchain.
+- Twelve hostile mutations were rejected by the checklist's static contracts.
+- The Android SDK was used only for build-time lint, tests, and assembly.
+- No emulator, accelerometer injection, physical device, share target, or live chooser scenario was executed;
+  every runtime matrix row remains `not run`.
