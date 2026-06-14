@@ -1,5 +1,10 @@
 # Android Tweet Shake Changes
 
+## 2026-06-14
+
+- Required current successful accelerometer registration, in addition to
+  resumed lifecycle state, before queued callbacks can trigger shake handling.
+
 ## 2026-06-13
 
 - Recovered from missing activities and permission-rejected chooser launches

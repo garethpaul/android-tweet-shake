@@ -87,6 +87,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Failure to register the accelerometer listener is also surfaced to the user.
 - Queued accelerometer callbacks are ignored after the activity pauses so a
   stale sensor event cannot launch a sharesheet from the background.
+- Queued callbacks require current successful accelerometer registration
+  ownership before shake detection runs.
 - Sharesheet launch follows Android's launch-and-catch pattern without a
   package-visibility preflight and rejects duplicate sensor events while a
   chooser is already opening.

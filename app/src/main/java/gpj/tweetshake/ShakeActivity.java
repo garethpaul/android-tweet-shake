@@ -37,7 +37,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     }
 
     private void checkShake(SensorEvent event) {
-        if (!activityResumed) {
+        if (!activityResumed || !sensorRegistered) {
             return;
         }
 

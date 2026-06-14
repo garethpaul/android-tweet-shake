@@ -37,6 +37,8 @@ Helpful reports include:
   be restored.
 - Missing activities and permission-rejected chooser launches recover through
   generic feedback without retaining duplicate-launch suppression.
+- Sensor callbacks require current successful accelerometer registration and
+  resumed lifecycle state before launching a chooser.
 - Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
   repository with explicit CI, Gradle, verification, and app boundaries;
   repository rules should require owner approval and `Check / check`.

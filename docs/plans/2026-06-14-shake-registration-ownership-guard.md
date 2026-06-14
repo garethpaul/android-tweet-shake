@@ -1,6 +1,6 @@
 # Shake Registration Ownership Guard
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -34,3 +34,15 @@ sensor registration.
   permissions, dependencies, SDK levels, or user-visible strings.
 - Do not claim emulator, physical-sensor, or chooser runtime verification.
 - Do not merge or close stacked pull requests without explicit authorization.
+
+## Verification Completed
+
+- The SDK-free baseline checker passed with the exact combined lifecycle and
+  current-registration predicate before event-array access.
+- Five focused hostile mutations were rejected for omitted registration
+  ownership, weakened AND logic, late guard ordering, documentation drift, and
+  stale plan status.
+- SDK-backed `make check` passed from the repository root and from an unrelated
+  temporary working directory, including the exact baseline, the one documented
+  `OldTargetApi` warning for each lint variant, both JVM test variants, and
+  debug APK assembly.

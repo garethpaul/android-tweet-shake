@@ -29,6 +29,7 @@ CI_BASELINE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 WRAPPER_PLAN="$ROOT_DIR/docs/plans/2026-06-12-gradle-wrapper-verification.md"
 DEBOUNCE_TIMESTAMP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-shake-debounce-timestamp-guard.md"
 SHARE_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-13-share-security-exception-recovery.md"
+REGISTRATION_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-14-shake-registration-ownership-guard.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -82,7 +83,7 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-e712bcac817d4b5a3605e8fe4a66d3e7184d8e94647822752796cd8449f87ebb  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+a249d65c6bb01bc2dffcaa387eb48307a6d7175129e6c86af91287e0b06e6c01  app/src/main/java/gpj/tweetshake/ShakeActivity.java
 d0e77a3a107080adae2503b121f41c1d388e3efd4a3b03f51057a8c9fb0c7a24  app/src/main/java/gpj/tweetshake/ShakeDetector.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
 90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
@@ -291,17 +292,32 @@ if [ "$(grep -Fc "private boolean activityResumed;" "$SHAKE_ACTIVITY" || true)" 
   exit 1
 fi
 
-if [ "$(printf '%s\n' "$CHECK_SHAKE" | grep -Fc "if (!activityResumed)" || true)" -ne 1 ]; then
-  printf '%s\n' "Queued shake callbacks must be ignored outside the resumed activity state." >&2
+if [ "$(printf '%s\n' "$CHECK_SHAKE" | grep -Fc "if (!activityResumed || !sensorRegistered)" || true)" -ne 1 ]; then
+  printf '%s\n' "Queued shake callbacks require resumed state and current sensor registration." >&2
   exit 1
 fi
 
-CHECK_GUARD_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "if (!activityResumed)" | cut -d: -f1)
+CHECK_GUARD_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "if (!activityResumed || !sensorRegistered)" | cut -d: -f1)
 CHECK_EVENT_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "event == null" | cut -d: -f1)
 if [ "$CHECK_GUARD_LINE" -ge "$CHECK_EVENT_LINE" ]; then
-  printf '%s\n' "Foreground state must be checked before reading queued sensor callbacks." >&2
+  printf '%s\n' "Lifecycle and registration ownership must be checked before reading queued sensor callbacks." >&2
   exit 1
 fi
+
+if [ ! -f "$REGISTRATION_OWNERSHIP_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$REGISTRATION_OWNERSHIP_PLAN" || \
+   ! grep -Fq "make check" "$REGISTRATION_OWNERSHIP_PLAN" || \
+   ! grep -Fq "focused hostile mutations" "$REGISTRATION_OWNERSHIP_PLAN"; then
+  printf '%s\n' "Shake registration-ownership plan must record completed verification." >&2
+  exit 1
+fi
+
+for registration_doc in "$README" "$SECURITY" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "current successful accelerometer registration" "$registration_doc"; then
+    printf '%s\n' "$registration_doc must document callback registration ownership." >&2
+    exit 1
+  fi
+done
 
 if [ "$(printf '%s\n' "$ON_RESUME" | grep -Fc "activityResumed = true;" || true)" -ne 1 ]; then
   printf '%s\n' "Shake activity must mark itself resumed before processing callbacks." >&2
