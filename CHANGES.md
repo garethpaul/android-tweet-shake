@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Added portable host regression tests for shake detection so core behavior is
+  exercised even when the Android SDK is unavailable.
 - Required current successful accelerometer registration, in addition to
   resumed lifecycle state, before queued callbacks can trigger shake handling.
 

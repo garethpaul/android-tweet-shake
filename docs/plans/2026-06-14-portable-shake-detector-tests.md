@@ -1,6 +1,6 @@
 # Portable Shake Detector Tests
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -59,4 +59,13 @@ bounded validation after implementation.
 
 ## Verification
 
-- Pending implementation and bounded validation.
+- The portable runner and root/external-directory `make check` gates passed all
+  twelve detector cases; Android SDK-dependent tasks truthfully retain their
+  existing conditional execution.
+- Eight hostile mutations were rejected for missing invocation, copied-source
+  compilation, missing cleanup, removed finite/overflow/debounce coverage,
+  documentation drift, and reopened plan status.
+- Final verification covered shell syntax, direct Java 7 compilation, exact
+  diff, whitespace, conflict markers, credential-shaped additions, and
+  generated artifacts.
+- Emulator, physical-sensor, and chooser behavior were not exercised.

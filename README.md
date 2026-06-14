@@ -65,10 +65,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
-- `make test` - runs Gradle tests when the Android SDK is configured.
+- `make test` - always runs portable shake-detector tests, then Gradle tests
+  when the Android SDK is configured.
 - `make build` - runs debug assembly when the Android SDK is configured.
 - `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
+- `scripts/test-shake-detector.sh` - compiles the production detector with a
+  dependency-free host regression matrix in an isolated temporary directory.
 - GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
   requests on Ubuntu 24.04 and cancels superseded runs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded

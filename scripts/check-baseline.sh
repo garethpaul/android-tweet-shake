@@ -14,6 +14,8 @@ MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
+SHAKE_HOST_TEST="$ROOT_DIR/scripts/ShakeDetectorHostTest.java"
+SHAKE_HOST_RUNNER="$ROOT_DIR/scripts/test-shake-detector.sh"
 SHAKE_LAYOUT="$ROOT_DIR/app/src/main/res/layout/shake_main.xml"
 STRINGS="$ROOT_DIR/app/src/main/res/values/strings.xml"
 COLORS="$ROOT_DIR/app/src/main/res/values/colors.xml"
@@ -30,6 +32,7 @@ WRAPPER_PLAN="$ROOT_DIR/docs/plans/2026-06-12-gradle-wrapper-verification.md"
 DEBOUNCE_TIMESTAMP_PLAN="$ROOT_DIR/docs/plans/2026-06-13-shake-debounce-timestamp-guard.md"
 SHARE_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-13-share-security-exception-recovery.md"
 REGISTRATION_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-14-shake-registration-ownership-guard.md"
+PORTABLE_DETECTOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-portable-shake-detector-tests.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -51,6 +54,8 @@ for file in \
   "$SHAKE_ACTIVITY" \
   "$SHAKE_DETECTOR" \
   "$SHAKE_DETECTOR_TEST" \
+  "$SHAKE_HOST_TEST" \
+  "$SHAKE_HOST_RUNNER" \
   "$SHAKE_LAYOUT" \
   "$STRINGS"; do
   if [ ! -f "$file" ]; then
@@ -58,6 +63,62 @@ for file in \
     exit 1
   fi
 done
+
+for host_contract in \
+  'ignoresMovementBelowThreshold' \
+  'ignoresNaNAcceleration' \
+  'ignoresInfiniteAcceleration' \
+  'invalidAccelerationDoesNotConsumeDebounceWindow' \
+  'ignoresOverflowAccelerationMagnitude' \
+  'triggersAtConfiguredThreshold' \
+  'firstShakeAtMaximumTimestampTriggers' \
+  'backwardTimestampDoesNotReplaceAcceptedShakeTime' \
+  'negativeTimestampDoesNotConsumeDebounceWindow' \
+  'ignoresMovementBelowConfiguredGravityThreshold' \
+  'debouncesConsecutiveShakes' \
+  'allowsShakeAtCooldownBoundary' \
+  'Portable shake detector tests passed:'; do
+  if ! grep -Fq "$host_contract" "$SHAKE_HOST_TEST"; then
+    printf '%s\n' "Portable shake detector coverage is missing: $host_contract" >&2
+    exit 1
+  fi
+done
+
+for runner_contract in \
+  'OUTPUT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/tweet-shake-detector.XXXXXX")' \
+  'if [ -d "$OUTPUT_DIR" ]; then' \
+  'rm -rf -- "$OUTPUT_DIR"' \
+  'trap cleanup EXIT' \
+  'trap '\''cleanup; exit 1'\'' HUP INT TERM' \
+  '"$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"' \
+  '"$ROOT_DIR/scripts/ShakeDetectorHostTest.java"' \
+  'java -cp "$OUTPUT_DIR" gpj.tweetshake.ShakeDetectorHostTest'; do
+  if ! grep -Fq "$runner_contract" "$SHAKE_HOST_RUNNER"; then
+    printf '%s\n' "Portable shake detector runner changed: $runner_contract" >&2
+    exit 1
+  fi
+done
+if ! grep -Fq 'if (test.cases != 12)' "$SHAKE_HOST_TEST"; then
+  printf '%s\n' "Portable shake detector runner must require all twelve cases." >&2
+  exit 1
+fi
+if [ "$(grep -Fc '$(ROOT)scripts/test-shake-detector.sh' "$ROOT_DIR/Makefile")" -ne 1 ]; then
+  printf '%s\n' "Make test must run the portable shake detector suite exactly once." >&2
+  exit 1
+fi
+if [ ! -f "$PORTABLE_DETECTOR_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$PORTABLE_DETECTOR_PLAN" || \
+   ! grep -Fq "make check" "$PORTABLE_DETECTOR_PLAN" || \
+   ! grep -Fq "hostile mutations" "$PORTABLE_DETECTOR_PLAN"; then
+  printf '%s\n' "Portable shake detector plan must record completed verification." >&2
+  exit 1
+fi
+if ! grep -Fq 'Portable detector tests: `scripts/test-shake-detector.sh`' "$ROOT_DIR/AGENTS.md" || \
+   ! grep -Fq 'always runs portable shake-detector tests' "$README" || \
+   ! grep -Fq 'portable host regression tests for shake detection' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Portable shake detector documentation is incomplete." >&2
+  exit 1
+fi
 
 if git -C "$ROOT_DIR" ls-files -s | awk '$1 == "120000" { found = 1 } END { exit found ? 0 : 1 }'; then
   printf '%s\n' "Tracked symbolic links are outside the audited repository baseline." >&2

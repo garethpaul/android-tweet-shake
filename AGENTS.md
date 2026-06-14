@@ -20,6 +20,7 @@
 - Combined verification: `make verify`
 - Lint/static checks: `make lint`
 - Tests: `make test`
+- Portable detector tests: `scripts/test-shake-detector.sh`
 - Build: `make build`
 - Android unit tests when the SDK is configured: `./gradlew test`
 - Android debug build when the SDK is configured: `./gradlew assembleDebug`
