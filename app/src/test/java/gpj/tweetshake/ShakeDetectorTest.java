@@ -58,6 +58,7 @@ public class ShakeDetectorTest {
 
     @Test
     public void rejectsAdjacentValueBelowThreshold() {
+        ShakeDetector detector = new ShakeDetector();
         float threshold = ShakeDetector.GRAVITY_EARTH * 2f;
         float immediatelyBelow = Math.nextAfter(threshold, Float.NEGATIVE_INFINITY);
 
