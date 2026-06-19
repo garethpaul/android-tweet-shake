@@ -1,12 +1,57 @@
 # Android Tweet Shake Changes
 
+## 2026-06-19
+
+- Replaced lifecycle booleans shared by one long-lived sensor listener with a
+  tested per-resume registration token, fresh listener identity, main-looper
+  delivery, and pause-before-unregister invalidation.
+- Moved debounce input from callback time to the sensor event's monotonic
+  boot-time timestamp, and made duplicate share suppression part of the
+  session's accepted-shake transition.
+- Added portable lifecycle/session tests for pending, failed, paused, stale,
+  and replaced registrations plus launch failure and resume recovery.
+- Enforced the exact 2.0g threshold boundary instead of accepting the adjacent
+  lower float through an epsilon, with host and JUnit regressions.
+- Updated the test-only JUnit dependency from vulnerable 4.12 to 4.13.2.
+- Verified the Gradle wrapper JAR against Gradle's official 8.14.x checksum
+  registry and the Gradle 2.2.1 distribution against its official checksum.
+
+## 2026-06-14
+
+- Added an exact-commit Tweet Shake device verification matrix for sensor
+  availability, threshold and debounce behavior, registration ownership,
+  lifecycle callbacks, chooser suppression and failure recovery, and privacy-safe evidence, with every runtime row explicitly unexecuted.
+- Added portable host regression tests for shake detection so core behavior is
+  exercised even when the Android SDK is unavailable.
+- Required current successful accelerometer registration, in addition to
+  resumed lifecycle state, before queued callbacks can trigger shake handling.
+
+## 2026-06-13
+
+- Recovered from missing activities and permission-rejected chooser launches
+  through one state-reset and generic-feedback path.
+- Made first-shake debounce state explicit so maximum elapsed-realtime values do
+  not overflow timestamp arithmetic.
+- Rejected negative and backward debounce timestamps without replacing the last
+  accepted shake time.
+
 ## 2026-06-12
 
+- Regenerated the wrapper bootstrap with official Gradle 8.14.5 tooling while
+  retaining Gradle 2.2.1, and pinned exact distribution and artifact hashes.
 - Ignored queued accelerometer callbacks after activity pause so stale sensor
   events cannot launch the sharesheet from the background.
 
 ## 2026-06-10
 
+- Disabled persisted checkout credentials and added repository-wide ownership
+  for CI, Gradle, verification, and Android app trust boundaries.
+- Locked the sharesheet app's workflow, manifest, source inventory, Gradle
+  inputs, and wrapper hashes against hidden executable build inputs.
+- Made the complete production app tree byte-exact so additional outbound
+  intents, resources, renamed payloads, and image polyglots cannot land unseen.
+- Rejected Gradle `buildSrc` plugin shadowing as an implicit executable build
+  input outside the fixed legacy configuration.
 - Replaced retired Fabric/Twitter Kit login and composer integration with the
   Android sharesheet, removed credential placeholders and the network
   permission, and made the shake screen the launcher.

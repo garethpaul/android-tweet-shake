@@ -19,20 +19,32 @@ Priority:
 - Keep shake-triggered sharing understandable and user-confirmed
 - Preserve tested accelerometer threshold, finite-value, overflow, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
-- Keep shake debounce timing based on monotonic elapsed realtime
+- Keep shake debounce timing based on monotonic sensor event time
+- Keep debounce timestamp boundaries overflow-safe and non-consuming
 - Keep missing sensors and listener registration failures visible to the user
+- Reject stale listener generations across pause and later resume boundaries
+- Keep sensor callbacks on the main looper and acquire share suppression atomically
 - Guard sharesheet launch failures and duplicate chooser launches without
   package-visibility preflight queries
+- Recover from missing activities and permission-rejected chooser launches
+  without leaving duplicate-launch suppression active
 - Keep retired Fabric/Twitter dependencies, credentials, and network permission removed
 - Maintain SDK-free `make check` coverage for sensor, sharesheet, and build guardrails
 - Keep GitHub Actions aligned with the SDK-free `make check` baseline
 - Keep root lint, test, and build gates wired to the Gradle project
+- Keep the legacy Gradle runtime behind a checksum-verified generated wrapper
+- Keep exact-commit Tweet Shake device verification matrix evidence separate
+  from portable checks, with unexecuted sensor, chooser, and lifecycle rows
+  explicit
 
 Next priorities:
 
 - Verify shake threshold and chooser behavior on hardware
-- Modernize Gradle, SDK levels, and dependencies in a dedicated pass
+- Evaluate Gradle runtime, SDK, and dependency modernization together in a
+  dedicated compatibility pass; wrapper hardening is separate
 - Add activity-level tests after the Android toolchain is modernized
+- Execute the device verification matrix with synthetic text and privacy-safe
+  sensor, lifecycle, and chooser evidence
 
 Contribution rules:
 

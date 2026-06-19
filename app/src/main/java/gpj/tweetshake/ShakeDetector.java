@@ -4,9 +4,8 @@ final class ShakeDetector {
     static final float GRAVITY_EARTH = 9.80665f;
     static final float SHAKE_THRESHOLD_GRAVITY = 2.0f;
     static final long SHAKE_DEBOUNCE_MILLIS = 200L;
-    private static final float THRESHOLD_EPSILON = 0.0001f;
-
-    private long lastShakeAtMillis = -SHAKE_DEBOUNCE_MILLIS;
+    private boolean hasAcceptedShake;
+    private long lastShakeAtMillis;
 
     boolean shouldTrigger(float x, float y, float z, long nowMillis) {
         if (!hasFiniteAcceleration(x, y, z)) {
@@ -18,17 +17,23 @@ final class ShakeDetector {
             return false;
         }
 
-        float accelerationGravity = (float) Math.sqrt(accelerationMagnitudeSquared)
-                / GRAVITY_EARTH;
-
-        if (accelerationGravity < SHAKE_THRESHOLD_GRAVITY - THRESHOLD_EPSILON) {
+        double preciseMagnitudeSquared = ((double) x * x) + ((double) y * y) + ((double) z * z);
+        double thresholdAcceleration = (double) GRAVITY_EARTH * SHAKE_THRESHOLD_GRAVITY;
+        if (preciseMagnitudeSquared < thresholdAcceleration * thresholdAcceleration) {
             return false;
         }
 
-        if (nowMillis - lastShakeAtMillis < SHAKE_DEBOUNCE_MILLIS) {
+        if (nowMillis < 0L) {
             return false;
         }
 
+        if (hasAcceptedShake
+                && (nowMillis < lastShakeAtMillis
+                || nowMillis - lastShakeAtMillis < SHAKE_DEBOUNCE_MILLIS)) {
+            return false;
+        }
+
+        hasAcceptedShake = true;
         lastShakeAtMillis = nowMillis;
         return true;
     }

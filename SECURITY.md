@@ -32,15 +32,40 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: build.gradle, gradle.properties. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
+- The app uses the user-confirmed Android sharesheet and requests no direct
+  network permission. Retired Twitter/Fabric credentials and SDK code must not
+  be restored.
+- Missing activities and permission-rejected chooser launches recover through
+  generic feedback without retaining duplicate-launch suppression.
+- Sensor callbacks require current successful accelerometer registration and a
+  per-resume identity token before launching a chooser. Listener delivery is
+  bound to the main looper, and pause invalidates ownership before teardown.
+- The exported launcher ignores inbound intent extras. Outgoing share text is a
+  fixed, byte-pinned application resource rather than caller-controlled data.
+- Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
+  repository with explicit CI, Gradle, verification, and app boundaries;
+  repository rules should require owner approval and `Check / check`.
+- The complete production app tree is byte-exact, including Java, manifest,
+  XML resources, and images, so extra outbound intents or renamed packaged
+  payloads require an explicit reviewed baseline update.
+- Implicit Gradle `buildSrc` code is rejected in addition to the fixed explicit
+  Gradle configuration and recorded wrapper hashes.
 - Pinned, read-only GitHub Actions runs `make check` so sensor, sharesheet,
   manifest, dependency-removal, and legacy build guardrails stay enforced
   before merge.
+- The baseline pins and verifies the wrapper JAR and Gradle distribution checksums.
+  The JAR matches Gradle's official 8.14.x wrapper registry, and the configured
+  Gradle 2.2.1 checksum matches the official distribution checksum endpoint.
+  An uncached bootstrap still depends on Gradle's HTTPS service.
 
 ## Mobile Privacy Notes
 
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 ## Dependency and Supply Chain Security
+
+The generated Gradle 8.14.5 bootstrap retains the legacy Gradle 2.2.1 runtime
+required by Android Gradle Plugin 1.2.3. Review all four wrapper files together.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 

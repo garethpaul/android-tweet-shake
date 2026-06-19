@@ -10,7 +10,7 @@
 This legacy Android sample opens Android's sharesheet with prefilled text when
 the user shakes the phone.
 
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java (4), shell (1).
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java and shell.
 
 ## Repository Contents
 
@@ -37,9 +37,14 @@ Additional scan context:
 
 - Git
 - Android Studio or a compatible Android SDK
-- Gradle or the checked-in Gradle wrapper when present
+- Java 8 and the checked-in Gradle wrapper
 
 ### Setup
+
+The generated wrapper still executes Gradle 2.2.1 for compatibility. It uses
+`distributionSha256Sum` to authenticate the download, while the SDK-free
+baseline verifies the wrapper JAR and launchers. This does not make an
+uncached build offline-reproducible; Gradle's HTTPS service is still required.
 
 ```bash
 git clone https://github.com/garethpaul/android-tweet-shake.git
@@ -60,10 +65,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
-- `make test` - runs Gradle tests when the Android SDK is configured.
+- `make test` - always runs portable shake-detector tests plus lifecycle/session
+  tests, then Gradle tests
+  when the Android SDK is configured.
 - `make build` - runs debug assembly when the Android SDK is configured.
 - `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
+- `scripts/test-shake-detector.sh` - compiles the production detector and
+  lifecycle/session owner with dependency-free host regression matrices in an
+  isolated temporary directory.
 - GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
   requests on Ubuntu 24.04 and cancels superseded runs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded
@@ -71,21 +81,42 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The baseline protects threshold units, finite sensor handling, debounce
   behavior, Android sharesheet dispatch, sensor lifecycle handling, and legacy
   build guardrails.
-- Shake debounce uses Android's monotonic elapsed realtime clock so wall-clock
-  changes do not affect shake timing.
+- Shake debounce uses each sensor event's monotonic boot-time timestamp so
+  callback scheduling and wall-clock changes do not affect shake timing.
+- Debounce timestamp handling is overflow-safe at the maximum elapsed-time value;
+  negative and backward timestamps are rejected without consuming accepted state.
 - Overflowed acceleration magnitude is rejected before shake debounce so
   implausibly large finite sensor values cannot trigger composition.
 - Missing shake sensor support shows generic unavailable feedback instead of
   failing silently.
 - Failure to register the accelerometer listener is also surfaced to the user.
-- Queued accelerometer callbacks are ignored after the activity pauses so a
-  stale sensor event cannot launch a sharesheet from the background.
+- Each resume creates an identity token and a fresh main-looper listener.
+  Queued accelerometer callbacks are ignored after the activity pauses and
+  remain stale after a later resume, so old sensor events cannot launch a
+  sharesheet.
+- Queued callbacks require current successful accelerometer registration
+  ownership before shake detection runs, and the session acquires duplicate
+  launch suppression before returning a successful shake.
 - Sharesheet launch follows Android's launch-and-catch pattern without a
   package-visibility preflight and rejects duplicate sensor events while a
   chooser is already opening.
+- Missing activities and permission-rejected chooser launches clear the
+  in-progress flag and show the same generic unavailable feedback.
+- The exported launcher ignores inbound intent extras; share text comes only
+  from the byte-pinned application resource.
+- JUnit is pinned to 4.13.2; the vulnerable 4.12 test dependency is not used.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
-When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
+Use [`DEVICE_VERIFICATION.md`](DEVICE_VERIFICATION.md) for the exact-commit
+Tweet Shake matrix. It covers sensor availability, threshold and debounce
+behavior, registration ownership, lifecycle callbacks, chooser suppression and
+failure recovery, privacy-safe evidence, and explicit unexecuted rows.
+
+The canonical GitHub Actions workflow installs Android API 22 and build-tools
+24.0.3, selects Java 8, and runs the complete `make check` gate. The legacy
+target SDK produces one documented `OldTargetApi` compatibility warning.
+
+When the required SDK or runtime is unavailable locally, use static checks and source review first, then rely on the hosted matching platform toolchain.
 
 ## Configuration and Secrets
 
@@ -114,12 +145,18 @@ When the required SDK or runtime is unavailable, use static checks and source re
   small detector, compares acceleration magnitude against the configured 2.0g
   threshold, rejects non-finite accelerometer values without consuming debounce
   state, rejects overflowed acceleration magnitude before debounce, uses
-  monotonic elapsed realtime for shake debounce timing, keeps the resource lint
-  gate clean, pins compatible legacy build tooling, and removes generated IDE
-  metadata from version control. Missing accelerometer support, listener
+  monotonic sensor event time for shake debounce timing, safely handles timestamp
+  boundaries without replacing accepted state, keeps the resource lint gate
+  clean, pins compatible legacy build tooling, and removes generated IDE metadata
+  from version control. Missing accelerometer support, listener
   registration failure, and sharesheet launch failure surface generic messages.
+- Portable lifecycle/session tests verify failed and stale registrations,
+  pause/resume token invalidation, atomic duplicate suppression, and retry after
+  permission-rejected or missing-activity launch failures.
 - Future work should add hardware or emulator verification for shake and
   chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
+- Hosted pull requests and default-branch pushes run lint, JVM tests, and debug
+  assembly with Android API 22, build-tools 24.0.3, and Java 8.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `CHANGES.md` for the maintenance history.
@@ -133,12 +170,20 @@ When the required SDK or runtime is unavailable, use static checks and source re
   monotonic shake debounce timing contract.
 - See `docs/plans/2026-06-09-shake-magnitude-overflow-guard.md` for the
   overflowed acceleration magnitude guard.
+- See `docs/plans/2026-06-13-shake-debounce-timestamp-guard.md` for overflow-safe
+  debounce timestamp handling.
 - See `docs/plans/2026-06-09-tweet-shake-make-gate-targets.md` for the root
   lint, test, and build gate contract.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-12-hosted-android-verification.md` for the complete
+  hosted Android lint, test, and build gate.
 - See `docs/plans/2026-06-10-platform-sharesheet.md` for the migration away
   from retired Fabric and Twitter Kit dependencies.
+- See `docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md`
+  for the device evidence matrix and runtime non-claims.
+- See `docs/plans/2026-06-19-android-tweet-shake-deep-review.md` for the
+  cumulative PR review, fixes, executable proof, and remaining device risks.
 
 Earlier login and credential plans remain in `docs/plans/` as historical
 context for the retired integration.

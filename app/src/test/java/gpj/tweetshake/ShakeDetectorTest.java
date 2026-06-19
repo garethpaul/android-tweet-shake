@@ -57,6 +57,46 @@ public class ShakeDetectorTest {
     }
 
     @Test
+    public void rejectsAdjacentValueBelowThreshold() {
+        ShakeDetector detector = new ShakeDetector();
+        float threshold = ShakeDetector.GRAVITY_EARTH * 2f;
+        float immediatelyBelow = Math.nextAfter(threshold, Float.NEGATIVE_INFINITY);
+
+        assertFalse(detector.shouldTrigger(immediatelyBelow, 0f, 0f, 1000L));
+    }
+
+    @Test
+    public void firstShakeAtMaximumTimestampTriggers() {
+        ShakeDetector detector = new ShakeDetector();
+        float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;
+
+        assertTrue(detector.shouldTrigger(
+                thresholdAcceleration,
+                0f,
+                0f,
+                Long.MAX_VALUE));
+    }
+
+    @Test
+    public void backwardTimestampDoesNotReplaceAcceptedShakeTime() {
+        ShakeDetector detector = new ShakeDetector();
+        float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;
+
+        assertTrue(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, 1000L));
+        assertFalse(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, 999L));
+        assertTrue(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, 1200L));
+    }
+
+    @Test
+    public void negativeTimestampDoesNotConsumeDebounceWindow() {
+        ShakeDetector detector = new ShakeDetector();
+        float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;
+
+        assertFalse(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, -1L));
+        assertTrue(detector.shouldTrigger(thresholdAcceleration, 0f, 0f, 0L));
+    }
+
+    @Test
     public void ignoresMovementBelowConfiguredGravityThreshold() {
         ShakeDetector detector = new ShakeDetector();
         float belowThresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 1.9f;
