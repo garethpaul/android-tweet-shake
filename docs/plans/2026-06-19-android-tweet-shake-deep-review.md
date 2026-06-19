@@ -1,6 +1,6 @@
 # Android Tweet Shake Deep Review
 
-Status: In Progress
+Status: Completed
 
 ## Refs and Surface
 
@@ -45,12 +45,22 @@ part of this fix and would widen compatibility risk for the archived sample.
 ## Proof
 
 - Portable detector and session tests run from `scripts/test-shake-detector.sh`.
+- Root and external-directory `make check` passed. The local host lacked an
+  Android SDK, so local Gradle lint/test/assembly correctly remained skipped.
+- Direct JUnit 4.13.2 execution passed all 13 detector tests.
+- Twelve isolated hostile mutations were rejected, including stale-token,
+  late-registration, duplicate-launch, threshold, cooldown, main-looper,
+  Make-root, dependency, and skipped-suite mutations.
 - The source baseline checks listener tokens, main-looper registration, sensor
   event timestamps, narrow chooser recovery, Make root ownership, immutable CI
   actions, wrapper hashes, and the fixed production tree.
-- Android lint, JUnit, debug assembly, and CodeQL remain required hosted gates.
+- Hosted Check run `27851944925` passed Android lint, JUnit, and debug assembly
+  with API 22, build-tools 24.0.3, and Java 8.
+- Hosted CodeQL run `27851943703` passed Actions and Java/Kotlin analysis.
 - The wrapper JAR and distribution checksums are compared with Gradle-operated
   checksum sources.
+- Gitleaks 8.30.1 found zero current-tree and zero full-history findings;
+  GitHub reported zero open secret-scanning, Dependabot, and code-scanning alerts.
 
 ## Risk
 
