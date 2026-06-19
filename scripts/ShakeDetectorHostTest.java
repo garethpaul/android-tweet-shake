@@ -6,8 +6,8 @@ public final class ShakeDetectorHostTest {
     public static void main(String[] args) {
         ShakeDetectorHostTest test = new ShakeDetectorHostTest();
         test.run();
-        if (test.cases != 12) {
-            throw new AssertionError("Expected 12 cases, ran " + test.cases);
+        if (test.cases != 13) {
+            throw new AssertionError("Expected 13 cases, ran " + test.cases);
         }
         System.out.println("Portable shake detector tests passed: " + test.cases + " cases.");
     }
@@ -19,6 +19,7 @@ public final class ShakeDetectorHostTest {
         invalidAccelerationDoesNotConsumeDebounceWindow();
         ignoresOverflowAccelerationMagnitude();
         triggersAtConfiguredThreshold();
+        rejectsAdjacentValueBelowThreshold();
         firstShakeAtMaximumTimestampTriggers();
         backwardTimestampDoesNotReplaceAcceptedShakeTime();
         negativeTimestampDoesNotConsumeDebounceWindow();
@@ -67,6 +68,14 @@ public final class ShakeDetectorHostTest {
         ShakeDetector detector = new ShakeDetector();
         float threshold = ShakeDetector.GRAVITY_EARTH * 2f;
         expectTrue(detector.shouldTrigger(threshold, 0f, 0f, 1000L));
+        cases++;
+    }
+
+    private void rejectsAdjacentValueBelowThreshold() {
+        ShakeDetector detector = new ShakeDetector();
+        float threshold = ShakeDetector.GRAVITY_EARTH * 2f;
+        float immediatelyBelow = Math.nextAfter(threshold, Float.NEGATIVE_INFINITY);
+        expectFalse(detector.shouldTrigger(immediatelyBelow, 0f, 0f, 1000L));
         cases++;
     }
 

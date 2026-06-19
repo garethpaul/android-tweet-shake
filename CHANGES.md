@@ -1,5 +1,21 @@
 # Android Tweet Shake Changes
 
+## 2026-06-19
+
+- Replaced lifecycle booleans shared by one long-lived sensor listener with a
+  tested per-resume registration token, fresh listener identity, main-looper
+  delivery, and pause-before-unregister invalidation.
+- Moved debounce input from callback time to the sensor event's monotonic
+  boot-time timestamp, and made duplicate share suppression part of the
+  session's accepted-shake transition.
+- Added portable lifecycle/session tests for pending, failed, paused, stale,
+  and replaced registrations plus launch failure and resume recovery.
+- Enforced the exact 2.0g threshold boundary instead of accepting the adjacent
+  lower float through an epsilon, with host and JUnit regressions.
+- Updated the test-only JUnit dependency from vulnerable 4.12 to 4.13.2.
+- Verified the Gradle wrapper JAR against Gradle's official 8.14.x checksum
+  registry and the Gradle 2.2.1 distribution against its official checksum.
+
 ## 2026-06-14
 
 - Added an exact-commit Tweet Shake device verification matrix for sensor

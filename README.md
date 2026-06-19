@@ -10,7 +10,7 @@
 This legacy Android sample opens Android's sharesheet with prefilled text when
 the user shakes the phone.
 
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java (4), shell (1).
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Java and shell.
 
 ## Repository Contents
 
@@ -65,13 +65,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
-- `make test` - always runs portable shake-detector tests, then Gradle tests
+- `make test` - always runs portable shake-detector tests plus lifecycle/session
+  tests, then Gradle tests
   when the Android SDK is configured.
 - `make build` - runs debug assembly when the Android SDK is configured.
 - `make check` - runs the aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
-- `scripts/test-shake-detector.sh` - compiles the production detector with a
-  dependency-free host regression matrix in an isolated temporary directory.
+- `scripts/test-shake-detector.sh` - compiles the production detector and
+  lifecycle/session owner with dependency-free host regression matrices in an
+  isolated temporary directory.
 - GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
   requests on Ubuntu 24.04 and cancels superseded runs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded
@@ -79,8 +81,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The baseline protects threshold units, finite sensor handling, debounce
   behavior, Android sharesheet dispatch, sensor lifecycle handling, and legacy
   build guardrails.
-- Shake debounce uses Android's monotonic elapsed realtime clock so wall-clock
-  changes do not affect shake timing.
+- Shake debounce uses each sensor event's monotonic boot-time timestamp so
+  callback scheduling and wall-clock changes do not affect shake timing.
 - Debounce timestamp handling is overflow-safe at the maximum elapsed-time value;
   negative and backward timestamps are rejected without consuming accepted state.
 - Overflowed acceleration magnitude is rejected before shake debounce so
@@ -88,15 +90,21 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Missing shake sensor support shows generic unavailable feedback instead of
   failing silently.
 - Failure to register the accelerometer listener is also surfaced to the user.
-- Queued accelerometer callbacks are ignored after the activity pauses so a
-  stale sensor event cannot launch a sharesheet from the background.
+- Each resume creates an identity token and a fresh main-looper listener.
+  Queued accelerometer callbacks are ignored after the activity pauses and
+  remain stale after a later resume, so old sensor events cannot launch a
+  sharesheet.
 - Queued callbacks require current successful accelerometer registration
-  ownership before shake detection runs.
+  ownership before shake detection runs, and the session acquires duplicate
+  launch suppression before returning a successful shake.
 - Sharesheet launch follows Android's launch-and-catch pattern without a
   package-visibility preflight and rejects duplicate sensor events while a
   chooser is already opening.
 - Missing activities and permission-rejected chooser launches clear the
   in-progress flag and show the same generic unavailable feedback.
+- The exported launcher ignores inbound intent extras; share text comes only
+  from the byte-pinned application resource.
+- JUnit is pinned to 4.13.2; the vulnerable 4.12 test dependency is not used.
 - `./gradlew lint --no-daemon`, `./gradlew test --no-daemon`, and `./gradlew assembleDebug --no-daemon` when the Android SDK is configured.
 
 Use [`DEVICE_VERIFICATION.md`](DEVICE_VERIFICATION.md) for the exact-commit
@@ -137,11 +145,14 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   small detector, compares acceleration magnitude against the configured 2.0g
   threshold, rejects non-finite accelerometer values without consuming debounce
   state, rejects overflowed acceleration magnitude before debounce, uses
-  monotonic elapsed realtime for shake debounce timing, safely handles timestamp
+  monotonic sensor event time for shake debounce timing, safely handles timestamp
   boundaries without replacing accepted state, keeps the resource lint gate
   clean, pins compatible legacy build tooling, and removes generated IDE metadata
   from version control. Missing accelerometer support, listener
   registration failure, and sharesheet launch failure surface generic messages.
+- Portable lifecycle/session tests verify failed and stale registrations,
+  pause/resume token invalidation, atomic duplicate suppression, and retry after
+  permission-rejected or missing-activity launch failures.
 - Future work should add hardware or emulator verification for shake and
   chooser behavior, then modernize SDK/dependency levels in a dedicated pass.
 - Hosted pull requests and default-branch pushes run lint, JVM tests, and debug
@@ -171,6 +182,8 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   from retired Fabric and Twitter Kit dependencies.
 - See `docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md`
   for the device evidence matrix and runtime non-claims.
+- See `docs/plans/2026-06-19-android-tweet-shake-deep-review.md` for the
+  cumulative PR review, fixes, executable proof, and remaining device risks.
 
 Earlier login and credential plans remain in `docs/plans/` as historical
 context for the retired integration.

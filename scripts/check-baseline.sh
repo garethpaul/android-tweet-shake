@@ -13,8 +13,10 @@ WRAPPER_JAR="$ROOT_DIR/gradle/wrapper/gradle-wrapper.jar"
 MANIFEST="$ROOT_DIR/app/src/main/AndroidManifest.xml"
 SHAKE_ACTIVITY="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeActivity.java"
 SHAKE_DETECTOR="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"
+SHAKE_SESSION="$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeSession.java"
 SHAKE_DETECTOR_TEST="$ROOT_DIR/app/src/test/java/gpj/tweetshake/ShakeDetectorTest.java"
 SHAKE_HOST_TEST="$ROOT_DIR/scripts/ShakeDetectorHostTest.java"
+SHAKE_SESSION_HOST_TEST="$ROOT_DIR/scripts/ShakeSessionHostTest.java"
 SHAKE_HOST_RUNNER="$ROOT_DIR/scripts/test-shake-detector.sh"
 SHAKE_LAYOUT="$ROOT_DIR/app/src/main/res/layout/shake_main.xml"
 STRINGS="$ROOT_DIR/app/src/main/res/values/strings.xml"
@@ -54,13 +56,32 @@ for file in \
   "$MANIFEST" \
   "$SHAKE_ACTIVITY" \
   "$SHAKE_DETECTOR" \
+  "$SHAKE_SESSION" \
   "$SHAKE_DETECTOR_TEST" \
   "$SHAKE_HOST_TEST" \
+  "$SHAKE_SESSION_HOST_TEST" \
   "$SHAKE_HOST_RUNNER" \
   "$SHAKE_LAYOUT" \
   "$STRINGS"; do
   if [ ! -f "$file" ]; then
     printf '%s\n' "Required baseline file is missing: $file" >&2
+    exit 1
+  fi
+done
+
+for session_contract in \
+  'rejectsCallbacksBeforeRegistrationCompletes' \
+  'failedRegistrationNeverOwnsCallbacks' \
+  'pauseInvalidatesQueuedCallbacks' \
+  'lateRegistrationResultCannotReactivatePausedSession' \
+  'staleCallbacksStayInvalidAfterResume' \
+  'staleRegistrationResultCannotClaimNewResume' \
+  'acceptedShakeLocksShareLaunchAtomically' \
+  'failedShareLaunchAllowsRetry' \
+  'resumeClearsPreviousShareLock' \
+  'Portable shake session tests passed:'; do
+  if ! grep -Fq "$session_contract" "$SHAKE_SESSION_HOST_TEST"; then
+    printf '%s\n' "Portable shake session coverage is missing: $session_contract" >&2
     exit 1
   fi
 done
@@ -72,6 +93,7 @@ for host_contract in \
   'invalidAccelerationDoesNotConsumeDebounceWindow' \
   'ignoresOverflowAccelerationMagnitude' \
   'triggersAtConfiguredThreshold' \
+  'rejectsAdjacentValueBelowThreshold' \
   'firstShakeAtMaximumTimestampTriggers' \
   'backwardTimestampDoesNotReplaceAcceptedShakeTime' \
   'negativeTimestampDoesNotConsumeDebounceWindow' \
@@ -91,16 +113,25 @@ for runner_contract in \
   'rm -rf -- "$OUTPUT_DIR"' \
   'trap cleanup EXIT' \
   'trap '\''cleanup; exit 1'\'' HUP INT TERM' \
+  'JAVAC=${JAVAC:-javac}' \
+  'JAVA=${JAVA:-java}' \
   '"$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeDetector.java"' \
+  '"$ROOT_DIR/app/src/main/java/gpj/tweetshake/ShakeSession.java"' \
   '"$ROOT_DIR/scripts/ShakeDetectorHostTest.java"' \
-  'java -cp "$OUTPUT_DIR" gpj.tweetshake.ShakeDetectorHostTest'; do
+  '"$ROOT_DIR/scripts/ShakeSessionHostTest.java"' \
+  '"$JAVA" -cp "$OUTPUT_DIR" gpj.tweetshake.ShakeDetectorHostTest' \
+  '"$JAVA" -cp "$OUTPUT_DIR" gpj.tweetshake.ShakeSessionHostTest'; do
   if ! grep -Fq "$runner_contract" "$SHAKE_HOST_RUNNER"; then
     printf '%s\n' "Portable shake detector runner changed: $runner_contract" >&2
     exit 1
   fi
 done
-if ! grep -Fq 'if (test.cases != 12)' "$SHAKE_HOST_TEST"; then
-  printf '%s\n' "Portable shake detector runner must require all twelve cases." >&2
+if ! grep -Fq 'if (test.cases != 13)' "$SHAKE_HOST_TEST"; then
+  printf '%s\n' "Portable shake detector runner must require all thirteen cases." >&2
+  exit 1
+fi
+if ! grep -Fq 'if (test.cases != 9)' "$SHAKE_SESSION_HOST_TEST"; then
+  printf '%s\n' "Portable shake session runner must require all nine cases." >&2
   exit 1
 fi
 if [ "$(grep -Fc '$(ROOT)scripts/test-shake-detector.sh' "$ROOT_DIR/Makefile")" -ne 1 ]; then
@@ -180,6 +211,7 @@ expected_source_paths=$(printf '%s\n' \
   "$ROOT_DIR/app/src/androidTest/java/gpj/tweetshake/ApplicationTest.java" \
   "$SHAKE_ACTIVITY" \
   "$SHAKE_DETECTOR" \
+  "$SHAKE_SESSION" \
   "$SHAKE_DETECTOR_TEST" | LC_ALL=C sort)
 if [ "$source_paths" != "$expected_source_paths" ]; then
   printf '%s\n' "Android source inventory must match the audited sharesheet app." >&2
@@ -194,8 +226,9 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-a249d65c6bb01bc2dffcaa387eb48307a6d7175129e6c86af91287e0b06e6c01  app/src/main/java/gpj/tweetshake/ShakeActivity.java
-d0e77a3a107080adae2503b121f41c1d388e3efd4a3b03f51057a8c9fb0c7a24  app/src/main/java/gpj/tweetshake/ShakeDetector.java
+979d6ed34ea779c06f50d5efc9e8131d6d64fa993534733836c7e32b71c8101d  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+4a55c086ac9e0b028fb3b32390a5235cb81ba7e5b4b6fbbcd652a20e23fcda97  app/src/main/java/gpj/tweetshake/ShakeDetector.java
+78683f9a3227e0771cae154c326c1a4abd0f73b55c143e644d36af2c02fd14e2  app/src/main/java/gpj/tweetshake/ShakeSession.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
 90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
 820e323f5506dc1dda3fad164e5fa0acd56a8266e4ea441db94e60fd9972d28a  app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -240,7 +273,7 @@ if [ -e "$ROOT_DIR/buildSrc" ] || [ -L "$ROOT_DIR/buildSrc" ]; then
   exit 1
 fi
 
-require_sha256 "$APP_BUILD" "acef00c121527e0ce476bad5b410ef6b06a0c43c7654c8f87a9b3d42d0794471" \
+require_sha256 "$APP_BUILD" "b0bfe3513416b43eeeabe3e30221bf647f3a79a9240ea9a9d7e3745fcd0a8b3c" \
   "App Gradle configuration must match the audited sharesheet baseline."
 require_sha256 "$ROOT_BUILD" "14a3eb90ed06d4a557c987fe38659fc025fff85a4dee555990fe58b4a85a59e5" \
   "Root Gradle configuration must match the audited sharesheet baseline."
@@ -276,6 +309,11 @@ fi
 
 if ! grep -Fq 'buildToolsVersion "24.0.3"' "$APP_BUILD"; then
   printf '%s\n' "Android build-tools must stay pinned to 24.0.3 for 64-bit aapt." >&2
+  exit 1
+fi
+
+if ! grep -Fq "testCompile 'junit:junit:4.13.2'" "$APP_BUILD"; then
+  printf '%s\n' "JUnit must stay on the patched 4.13.2 test dependency." >&2
   exit 1
 fi
 
@@ -324,7 +362,7 @@ done
 
 for share_contract in \
   "private void showShareComposer()" \
-  "if (shareInProgress || isFinishing() || isDestroyed())" \
+  "if (isFinishing() || isDestroyed())" \
   "new Intent(Intent.ACTION_SEND)" \
   'shareIntent.setType("text/plain")' \
   "shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text))" \
@@ -333,8 +371,7 @@ for share_contract in \
   "catch (ActivityNotFoundException exception)" \
   "catch (SecurityException exception)" \
   "private void recoverFromShareLaunchFailure()" \
-  "shareInProgress = true" \
-  "shareInProgress = false" \
+  "shakeSession.shareLaunchFailed()" \
   "R.string.share_unavailable"; do
   if ! grep -Fq "$share_contract" "$SHAKE_ACTIVITY"; then
     printf '%s\n' "Missing platform sharesheet contract: $share_contract" >&2
@@ -346,7 +383,7 @@ SHARE_COMPOSER=$(sed -n \
   '/private void showShareComposer()/,/private void showSensorUnavailable()/p' \
   "$SHAKE_ACTIVITY")
 if [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "recoverFromShareLaunchFailure();")" -ne 2 ] || \
-   [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "shareInProgress = false;")" -ne 1 ] || \
+   [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "shakeSession.shareLaunchFailed();")" -ne 2 ] || \
    [ "$(printf '%s\n' "$SHARE_COMPOSER" | grep -Fc "showShareUnavailable();")" -ne 1 ]; then
   printf '%s\n' "Both narrow sharesheet launch catches must use one reviewed recovery path." >&2
   exit 1
@@ -377,16 +414,24 @@ if grep -Fq ".resolveActivity(" "$SHAKE_ACTIVITY"; then
   exit 1
 fi
 
+if grep -Eq 'get(Intent|StringExtra|CharSequenceExtra)|getExtras\(' "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "Exported launcher activity must not trust inbound share data." >&2
+  exit 1
+fi
+
 for sensor_contract in \
   "event == null || event.values == null || event.values.length < 3" \
-  "SystemClock.elapsedRealtime()" \
+  "TimeUnit.NANOSECONDS.toMillis(event.timestamp)" \
   "sensorManager == null" \
   "accelerometer == null" \
-  "sensorRegistered = sensorManager.registerListener(" \
-  "if (!sensorRegistered)" \
-  "if (sensorManager != null && sensorRegistered)" \
-  "sensorManager.unregisterListener(this)" \
-  "sensorRegistered = false" \
+  "new Handler(Looper.getMainLooper())" \
+  "createSensorListener(registration)" \
+  "shakeSession.beginResume()" \
+  "sensorManager.registerListener(" \
+  "mainHandler" \
+  "shakeSession.completeRegistration(registration, registered)" \
+  "shakeSession.pause()" \
+  "sensorManager.unregisterListener(listener)" \
   "R.string.shake_sensor_unavailable"; do
   if ! grep -Fq "$sensor_contract" "$SHAKE_ACTIVITY"; then
     printf '%s\n' "Missing shake sensor lifecycle contract: $sensor_contract" >&2
@@ -394,24 +439,26 @@ for sensor_contract in \
   fi
 done
 
-CHECK_SHAKE=$(sed -n '/private void checkShake(SensorEvent event)/,/private void showShareComposer()/p' "$SHAKE_ACTIVITY")
 ON_RESUME=$(sed -n '/protected void onResume()/,/protected void onPause()/p' "$SHAKE_ACTIVITY")
 ON_PAUSE=$(sed -n '/protected void onPause()/,/^    }/p' "$SHAKE_ACTIVITY")
 
-if [ "$(grep -Fc "private boolean activityResumed;" "$SHAKE_ACTIVITY" || true)" -ne 1 ]; then
-  printf '%s\n' "Shake activity must declare exactly one foreground-state field." >&2
-  exit 1
-fi
+for ownership_contract in \
+  'static final class Registration' \
+  'currentRegistration = new Registration()' \
+  'registration == currentRegistration' \
+  'currentRegistration = null' \
+  'registration != currentRegistration || !registrationSucceeded || shareInProgress' \
+  'shareInProgress = true' \
+  'shareInProgress = false'; do
+  if ! grep -Fq "$ownership_contract" "$SHAKE_SESSION"; then
+    printf '%s\n' "Missing executable shake ownership contract: $ownership_contract" >&2
+    exit 1
+  fi
+done
 
-if [ "$(printf '%s\n' "$CHECK_SHAKE" | grep -Fc "if (!activityResumed || !sensorRegistered)" || true)" -ne 1 ]; then
-  printf '%s\n' "Queued shake callbacks require resumed state and current sensor registration." >&2
-  exit 1
-fi
-
-CHECK_GUARD_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "if (!activityResumed || !sensorRegistered)" | cut -d: -f1)
-CHECK_EVENT_LINE=$(printf '%s\n' "$CHECK_SHAKE" | grep -nF "event == null" | cut -d: -f1)
-if [ "$CHECK_GUARD_LINE" -ge "$CHECK_EVENT_LINE" ]; then
-  printf '%s\n' "Lifecycle and registration ownership must be checked before reading queued sensor callbacks." >&2
+if grep -Fq 'implements SensorEventListener' "$SHAKE_ACTIVITY" || \
+   grep -Fq 'SystemClock.elapsedRealtime()' "$SHAKE_ACTIVITY"; then
+  printf '%s\n' "Shake callbacks must use per-resume listeners and sensor event time." >&2
   exit 1
 fi
 
@@ -430,31 +477,21 @@ for registration_doc in "$README" "$SECURITY" "$ROOT_DIR/CHANGES.md"; do
   fi
 done
 
-if [ "$(printf '%s\n' "$ON_RESUME" | grep -Fc "activityResumed = true;" || true)" -ne 1 ]; then
-  printf '%s\n' "Shake activity must mark itself resumed before processing callbacks." >&2
-  exit 1
-fi
-
 RESUME_SUPER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "super.onResume();" | cut -d: -f1)
-RESUME_ACTIVE_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "activityResumed = true;" | cut -d: -f1)
-RESUME_REGISTER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "sensorRegistered = sensorManager.registerListener(" | cut -d: -f1)
-if [ "$RESUME_SUPER_LINE" -ge "$RESUME_ACTIVE_LINE" ] || \
-   [ "$RESUME_ACTIVE_LINE" -ge "$RESUME_REGISTER_LINE" ]; then
-  printf '%s\n' "Shake activity must become active after superclass resume and before listener registration." >&2
+RESUME_SESSION_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "shakeSession.beginResume();" | cut -d: -f1)
+RESUME_REGISTER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "boolean registered = sensorManager.registerListener(" | cut -d: -f1)
+if [ "$RESUME_SUPER_LINE" -ge "$RESUME_SESSION_LINE" ] || \
+   [ "$RESUME_SESSION_LINE" -ge "$RESUME_REGISTER_LINE" ]; then
+  printf '%s\n' "Shake activity must establish a fresh token before listener registration." >&2
   exit 1
 fi
 
-if [ "$(printf '%s\n' "$ON_PAUSE" | grep -Fc "activityResumed = false;" || true)" -ne 1 ]; then
-  printf '%s\n' "Shake activity must become inactive before listener teardown." >&2
-  exit 1
-fi
-
-PAUSE_INACTIVE_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "activityResumed = false;" | cut -d: -f1)
-PAUSE_UNREGISTER_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "sensorManager.unregisterListener(this);" | cut -d: -f1)
+PAUSE_INVALIDATE_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "shakeSession.pause();" | cut -d: -f1)
+PAUSE_UNREGISTER_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "sensorManager.unregisterListener(listener);" | cut -d: -f1)
 PAUSE_SUPER_LINE=$(printf '%s\n' "$ON_PAUSE" | grep -nF "super.onPause();" | cut -d: -f1)
-if [ "$PAUSE_INACTIVE_LINE" -ge "$PAUSE_UNREGISTER_LINE" ] || \
+if [ "$PAUSE_INVALIDATE_LINE" -ge "$PAUSE_UNREGISTER_LINE" ] || \
    [ "$PAUSE_UNREGISTER_LINE" -ge "$PAUSE_SUPER_LINE" ]; then
-  printf '%s\n' "Shake activity must become inactive before listener teardown and superclass pause." >&2
+  printf '%s\n' "Shake activity must invalidate ownership before listener teardown and superclass pause." >&2
   exit 1
 fi
 
@@ -509,6 +546,7 @@ for test_contract in \
   "invalidAccelerationDoesNotConsumeDebounceWindow" \
   "ignoresOverflowAccelerationMagnitude" \
   "triggersAboveThreshold" \
+  "rejectsAdjacentValueBelowThreshold" \
   "firstShakeAtMaximumTimestampTriggers" \
   "backwardTimestampDoesNotReplaceAcceptedShakeTime" \
   "negativeTimestampDoesNotConsumeDebounceWindow" \

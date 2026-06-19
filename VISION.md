@@ -19,9 +19,11 @@ Priority:
 - Keep shake-triggered sharing understandable and user-confirmed
 - Preserve tested accelerometer threshold, finite-value, overflow, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
-- Keep shake debounce timing based on monotonic elapsed realtime
+- Keep shake debounce timing based on monotonic sensor event time
 - Keep debounce timestamp boundaries overflow-safe and non-consuming
 - Keep missing sensors and listener registration failures visible to the user
+- Reject stale listener generations across pause and later resume boundaries
+- Keep sensor callbacks on the main looper and acquire share suppression atomically
 - Guard sharesheet launch failures and duplicate chooser launches without
   package-visibility preflight queries
 - Recover from missing activities and permission-rejected chooser launches

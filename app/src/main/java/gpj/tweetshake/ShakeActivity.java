@@ -8,17 +8,19 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
-public class ShakeActivity extends Activity implements SensorEventListener {
+import java.util.concurrent.TimeUnit;
 
+public class ShakeActivity extends Activity {
+
+    private final ShakeSession shakeSession = new ShakeSession();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private final ShakeDetector shakeDetector = new ShakeDetector();
-    private boolean sensorRegistered;
-    private boolean shareInProgress;
-    private boolean activityResumed;
+    private SensorEventListener sensorListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,33 +38,45 @@ public class ShakeActivity extends Activity implements SensorEventListener {
         }
     }
 
-    private void checkShake(SensorEvent event) {
-        if (!activityResumed || !sensorRegistered) {
-            return;
-        }
+    private SensorEventListener createSensorListener(
+            final ShakeSession.Registration registration) {
+        return new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                checkShake(registration, event);
+            }
 
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+        };
+    }
+
+    private void checkShake(ShakeSession.Registration registration, SensorEvent event) {
         if (event == null || event.values == null || event.values.length < 3) {
             return;
         }
 
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
-
-        if (shakeDetector.shouldTrigger(x, y, z, SystemClock.elapsedRealtime())) {
+        long eventTimeMillis = TimeUnit.NANOSECONDS.toMillis(event.timestamp);
+        if (shakeSession.onSensorSample(
+                registration,
+                event.values[0],
+                event.values[1],
+                event.values[2],
+                eventTimeMillis)) {
             showShareComposer();
         }
     }
 
     private void showShareComposer() {
-        if (shareInProgress || isFinishing() || isDestroyed()) {
+        if (isFinishing() || isDestroyed()) {
+            shakeSession.shareLaunchFailed();
             return;
         }
 
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text));
-        shareInProgress = true;
         try {
             startActivity(Intent.createChooser(
                     shareIntent,
@@ -75,7 +89,7 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     }
 
     private void recoverFromShareLaunchFailure() {
-        shareInProgress = false;
+        shakeSession.shareLaunchFailed();
         showShareUnavailable();
     }
 
@@ -88,37 +102,34 @@ public class ShakeActivity extends Activity implements SensorEventListener {
     }
 
     @Override
-    public void onSensorChanged(SensorEvent event) {
-        checkShake(event);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
-        activityResumed = true;
-        shareInProgress = false;
-        if (sensorManager != null && accelerometer != null) {
-            sensorRegistered = sensorManager.registerListener(
-                    this,
-                    accelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-            if (!sensorRegistered) {
-                showSensorUnavailable();
-            }
+        ShakeSession.Registration registration = shakeSession.beginResume();
+        if (sensorManager == null || accelerometer == null) {
+            return;
+        }
+
+        SensorEventListener listener = createSensorListener(registration);
+        sensorListener = listener;
+        boolean registered = sensorManager.registerListener(
+                listener,
+                accelerometer,
+                SensorManager.SENSOR_DELAY_NORMAL,
+                mainHandler);
+        shakeSession.completeRegistration(registration, registered);
+        if (!registered) {
+            sensorListener = null;
+            showSensorUnavailable();
         }
     }
 
     @Override
     protected void onPause() {
-        activityResumed = false;
-        if (sensorManager != null && sensorRegistered) {
-            sensorManager.unregisterListener(this);
-            sensorRegistered = false;
+        shakeSession.pause();
+        SensorEventListener listener = sensorListener;
+        sensorListener = null;
+        if (sensorManager != null && listener != null) {
+            sensorManager.unregisterListener(listener);
         }
         super.onPause();
     }

@@ -57,6 +57,14 @@ public class ShakeDetectorTest {
     }
 
     @Test
+    public void rejectsAdjacentValueBelowThreshold() {
+        float threshold = ShakeDetector.GRAVITY_EARTH * 2f;
+        float immediatelyBelow = Math.nextAfter(threshold, Float.NEGATIVE_INFINITY);
+
+        assertFalse(detector.shouldTrigger(immediatelyBelow, 0f, 0f, 1000L));
+    }
+
+    @Test
     public void firstShakeAtMaximumTimestampTriggers() {
         ShakeDetector detector = new ShakeDetector();
         float thresholdAcceleration = ShakeDetector.GRAVITY_EARTH * 2f;

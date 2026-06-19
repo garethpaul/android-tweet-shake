@@ -37,8 +37,11 @@ Helpful reports include:
   be restored.
 - Missing activities and permission-rejected chooser launches recover through
   generic feedback without retaining duplicate-launch suppression.
-- Sensor callbacks require current successful accelerometer registration and
-  resumed lifecycle state before launching a chooser.
+- Sensor callbacks require current successful accelerometer registration and a
+  per-resume identity token before launching a chooser. Listener delivery is
+  bound to the main looper, and pause invalidates ownership before teardown.
+- The exported launcher ignores inbound intent extras. Outgoing share text is a
+  fixed, byte-pinned application resource rather than caller-controlled data.
 - Hosted checkout credentials are not persisted. CODEOWNERS covers the whole
   repository with explicit CI, Gradle, verification, and app boundaries;
   repository rules should require owner approval and `Check / check`.
@@ -51,6 +54,8 @@ Helpful reports include:
   manifest, dependency-removal, and legacy build guardrails stay enforced
   before merge.
 - The baseline pins and verifies the wrapper JAR and Gradle distribution checksums.
+  The JAR matches Gradle's official 8.14.x wrapper registry, and the configured
+  Gradle 2.2.1 checksum matches the official distribution checksum endpoint.
   An uncached bootstrap still depends on Gradle's HTTPS service.
 
 ## Mobile Privacy Notes
