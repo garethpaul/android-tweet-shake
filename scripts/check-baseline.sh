@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 APP_BUILD="$ROOT_DIR/app/build.gradle"
 ROOT_BUILD="$ROOT_DIR/build.gradle"
 SETTINGS_GRADLE="$ROOT_DIR/settings.gradle"
@@ -727,6 +727,12 @@ fi
 [ -x "$ROOT_DIR/scripts/test-makefile-root.sh" ] || { printf '%s\n' 'Make authority harness missing or not executable.' >&2; exit 1; }
 grep -Fq 'run: /usr/bin/make check' "$CI_WORKFLOW" || { printf '%s\n' 'Hosted verification must use system Make.' >&2; exit 1; }
 grep -Fq 'Status: Completed' "$ROOT_DIR/docs/plans/2026-06-21-android-tweet-shake-system-make-boundary.md" || { printf '%s\n' 'Make authority plan must be completed.' >&2; exit 1; }
+grep -Fq 'later override-shell fake-zero boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the later override-shell boundary.' >&2; exit 1; }
+grep -Fq 'later double-colon append boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the later double-colon boundary.' >&2; exit 1; }
+grep -Fq 'startup parse-time boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the startup parse-time boundary.' >&2; exit 1; }
+grep -Fq 'Caller-supplied later makefiles, including target-specific override SHELL/.SHELLFLAGS assignments and double-colon public recipes, are outside the local Make trust boundary.' "$ROOT_DIR/README.md" || { printf '%s\n' 'README must document the caller-supplied Make boundary.' >&2; exit 1; }
+grep -Fq 'Documented caller-supplied later makefiles and startup parse-time Make code as outside the local Make trust boundary.' "$ROOT_DIR/CHANGES.md" || { printf '%s\n' 'CHANGES must record the truthful Make boundary.' >&2; exit 1; }
+grep -Fq 'Startup makefiles can run parse-time Make functions before the repository Makefile rejects them.' "$ROOT_DIR/docs/plans/2026-06-21-android-tweet-shake-system-make-boundary.md" || { printf '%s\n' 'Make authority plan must document the startup parse-time boundary.' >&2; exit 1; }
 
 if grep -Eq '/(home|Users)/[^/]+/.+android-sdk' "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must not embed a maintainer-specific Android SDK path." >&2

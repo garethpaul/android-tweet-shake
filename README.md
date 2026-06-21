@@ -70,12 +70,17 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   when the Android SDK is configured.
 - `/usr/bin/make build` - runs debug assembly when the Android SDK is configured.
 - `/usr/bin/make check` - runs the Make authority harness and aggregate lint, test, and build gates.
+- Caller-supplied later makefiles, including target-specific override SHELL/.SHELLFLAGS assignments and double-colon public recipes, are outside the local Make trust boundary.
+- Startup makefiles can run parse-time Make functions before the repository
+  Makefile rejects them; run the documented aliases without extra `-f` files
+  or `MAKEFILES` when collecting local validation evidence.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - `scripts/test-shake-detector.sh` - compiles the production detector and
   lifecycle/session owner with dependency-free host regression matrices in an
   isolated temporary directory.
 - GitHub Actions enters through `/usr/bin/make` for pushes and pull
-  requests on Ubuntu 24.04 and cancels superseded runs.
+  requests on Ubuntu 24.04 and cancels superseded runs. Hosted validation uses
+  the checked-in workflow without caller-supplied Make programs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded
   timeout; local Gradle checks accept `ANDROID_HOME` or `ANDROID_SDK_ROOT`.
 - The baseline protects threshold units, finite sensor handling, debounce
