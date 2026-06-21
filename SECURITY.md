@@ -50,7 +50,7 @@ Helpful reports include:
   payloads require an explicit reviewed baseline update.
 - Implicit Gradle `buildSrc` code is rejected in addition to the fixed explicit
   Gradle configuration and recorded wrapper hashes.
-- Pinned, read-only GitHub Actions runs `make check` so sensor, sharesheet,
+- Pinned, read-only GitHub Actions runs `/usr/bin/make check` so sensor, sharesheet,
   manifest, dependency-removal, and legacy build guardrails stay enforced
   before merge.
 - The baseline pins and verifies the wrapper JAR and Gradle distribution checksums.
