@@ -74,7 +74,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Startup makefiles can run parse-time Make functions before the repository
   Makefile rejects them; run the documented aliases without extra `-f` files
   or `MAKEFILES` when collecting local validation evidence.
-- Make syntax in an explicit `-f` path is evaluated before the repository Makefile loads. For checkout paths containing literal `$(`, change into the checkout and invoke `/usr/bin/make` without an explicit Makefile path.
+- Make syntax in an explicit `-f` path is version-sensitive before the repository Makefile loads. For checkout paths containing literal `$(`, change into the checkout and invoke `/usr/bin/make` without an explicit Makefile path.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - `scripts/test-shake-detector.sh` - compiles the production detector and
   lifecycle/session owner with dependency-free host regression matrices in an

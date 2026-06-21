@@ -20,7 +20,7 @@ Startup makefiles can run parse-time Make functions before the repository Makefi
 - Recorded caller-supplied later makefiles, target-specific override shell
   assignments, double-colon public recipes, and startup parse-time Make code
   as outside the local Make trust boundary.
-- Recorded that Make syntax in an explicit `-f` path is evaluated before the
+- Recorded that Make syntax in an explicit `-f` path is version-sensitive before the
   repository Makefile loads; literal `$(` checkout paths must be invoked from
   inside the checkout without an explicit Makefile path.
 - Added `scripts/test-makefile-root.sh` to `/usr/bin/make check`.

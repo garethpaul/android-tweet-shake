@@ -30,7 +30,7 @@
   `SHELL`/`.SHELLFLAGS` assignments and double-colon public recipes, are
   outside the local Make trust boundary. Startup makefiles can execute
   parse-time Make functions before repository rejection.
-- Make syntax in an explicit `-f` path is evaluated before the repository Makefile loads; use the checkout as the working directory for paths containing literal `$(`.
+- Make syntax in an explicit `-f` path is version-sensitive before the repository Makefile loads; use the checkout as the working directory for paths containing literal `$(`.
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
 
 ## Coding conventions
