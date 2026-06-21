@@ -134,7 +134,7 @@ if ! grep -Fq 'if (test.cases != 9)' "$SHAKE_SESSION_HOST_TEST"; then
   printf '%s\n' "Portable shake session runner must require all nine cases." >&2
   exit 1
 fi
-if [ "$(grep -Fc '$(ROOT)scripts/test-shake-detector.sh' "$ROOT_DIR/Makefile")" -ne 1 ]; then
+if [ "$(grep -Fc "scripts/test-shake-detector.sh'" "$ROOT_DIR/Makefile")" -ne 1 ]; then
   printf '%s\n' "Make test must run the portable shake detector suite exactly once." >&2
   exit 1
 fi
@@ -643,7 +643,7 @@ jobs:
           distribution: corretto
           java-version: "8"
       - name: Run full verification
-        run: make check
+        run: /usr/bin/make check
 EOF
 if ! cmp -s "$CI_WORKFLOW" "$EXPECTED_FILE"; then
   printf '%s\n' "GitHub Actions check workflow must match the canonical credential-free contract." >&2
@@ -694,26 +694,27 @@ if [ ! -f "$CODEOWNERS" ] || ! cmp -s "$CODEOWNERS" "$EXPECTED_FILE"; then
 fi
 
 for make_contract in \
-  'override ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' \
-  'ANDROID_HOME ?=' \
-  'ANDROID_SDK_ROOT ?=' \
-  'GRADLE ?= $(ROOT)gradlew' \
-  'ANDROID_SDK := $(if $(ANDROID_HOME),$(ANDROID_HOME),$(ANDROID_SDK_ROOT))' \
-  'verify: lint test build'; do
-  if ! grep -Fxq "$make_contract" "$ROOT_DIR/Makefile"; then
+  'override SHELL := /bin/sh' \
+  'override ROOT := $(shell' \
+  'override GRADLE := $(ROOT)/gradlew' \
+  'override ANDROID_SDK := $(if $(ANDROID_HOME),$(ANDROID_HOME),$(ANDROID_SDK_ROOT))' \
+  'MAKEFLAGS must not be overridden' \
+  'MAKEFILES must be empty' \
+  'verify:: root-test lint test build'; do
+  if ! grep -Fq "$make_contract" "$ROOT_DIR/Makefile"; then
     printf '%s\n' "Makefile must keep contract: $make_contract" >&2
     exit 1
   fi
 done
 
-if [ "$(grep -Fc '$(ROOT)scripts/check-baseline.sh' "$ROOT_DIR/Makefile")" -ne 1 ]; then
+if [ "$(grep -Fc "scripts/check-baseline.sh'" "$ROOT_DIR/Makefile")" -ne 1 ]; then
   printf '%s\n' "Makefile lint must run the baseline checker from the protected root." >&2
   exit 1
 fi
 for gradle_contract in \
-  'cd $(ROOT) && ANDROID_HOME="$(ANDROID_SDK)" ANDROID_SDK_ROOT="$(ANDROID_SDK)" $(GRADLE) lint --no-daemon; \' \
-  'cd $(ROOT) && ANDROID_HOME="$(ANDROID_SDK)" ANDROID_SDK_ROOT="$(ANDROID_SDK)" $(GRADLE) test --no-daemon; \' \
-  'cd $(ROOT) && ANDROID_HOME="$(ANDROID_SDK)" ANDROID_SDK_ROOT="$(ANDROID_SDK)" $(GRADLE) assembleDebug --no-daemon; \' ; do
+  "'\$(REPOSITORY_GRADLE_LITERAL)' lint --no-daemon" \
+  "'\$(REPOSITORY_GRADLE_LITERAL)' test --no-daemon" \
+  "'\$(REPOSITORY_GRADLE_LITERAL)' assembleDebug --no-daemon"; do
   if [ "$(grep -Fc "$gradle_contract" "$ROOT_DIR/Makefile")" -ne 1 ]; then
     printf '%s\n' "Makefile must keep one complete rooted Gradle contract: $gradle_contract" >&2
     exit 1
@@ -723,6 +724,9 @@ if ! grep -Fxq "Status: Completed" "$ROOT_DIR/docs/plans/2026-06-14-android-twee
   printf '%s\n' "Tweet Shake Make root protection plan must record completed status." >&2
   exit 1
 fi
+[ -x "$ROOT_DIR/scripts/test-makefile-root.sh" ] || { printf '%s\n' 'Make authority harness missing or not executable.' >&2; exit 1; }
+grep -Fq 'run: /usr/bin/make check' "$CI_WORKFLOW" || { printf '%s\n' 'Hosted verification must use system Make.' >&2; exit 1; }
+grep -Fq 'Status: Completed' "$ROOT_DIR/docs/plans/2026-06-21-android-tweet-shake-system-make-boundary.md" || { printf '%s\n' 'Make authority plan must be completed.' >&2; exit 1; }
 
 if grep -Eq '/(home|Users)/[^/]+/.+android-sdk' "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must not embed a maintainer-specific Android SDK path." >&2

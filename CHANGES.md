@@ -1,5 +1,11 @@
 # Android Tweet Shake Changes
 
+## 2026-06-21
+
+- Bound hosted and contributor verification to `/usr/bin/make` and added an
+  executable authority harness for shell, root, SDK, Gradle, startup-file,
+  later-Makefile, and unsafe-mode boundaries.
+
 ## 2026-06-19
 
 - Replaced lifecycle booleans shared by one long-lived sensor listener with a

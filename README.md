@@ -49,7 +49,7 @@ uncached build offline-reproducible; Gradle's HTTPS service is still required.
 ```bash
 git clone https://github.com/garethpaul/android-tweet-shake.git
 cd android-tweet-shake
-make check
+/usr/bin/make check
 scripts/check-baseline.sh
 ./gradlew lint --no-daemon
 ./gradlew test --no-daemon
@@ -64,17 +64,17 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
-- `make test` - always runs portable shake-detector tests plus lifecycle/session
+- `/usr/bin/make lint` - runs the SDK-free baseline and Gradle lint when the Android SDK is configured.
+- `/usr/bin/make test` - always runs portable shake-detector tests plus lifecycle/session
   tests, then Gradle tests
   when the Android SDK is configured.
-- `make build` - runs debug assembly when the Android SDK is configured.
-- `make check` - runs the aggregate lint, test, and build gates.
+- `/usr/bin/make build` - runs debug assembly when the Android SDK is configured.
+- `/usr/bin/make check` - runs the Make authority harness and aggregate lint, test, and build gates.
 - `scripts/check-baseline.sh` - runs SDK-free source baseline checks.
 - `scripts/test-shake-detector.sh` - compiles the production detector and
   lifecycle/session owner with dependency-free host regression matrices in an
   isolated temporary directory.
-- GitHub Actions runs the SDK-free `make check` baseline for pushes and pull
+- GitHub Actions enters through `/usr/bin/make` for pushes and pull
   requests on Ubuntu 24.04 and cancels superseded runs.
 - The workflow uses immutable checkout, read-only permissions, and a bounded
   timeout; local Gradle checks accept `ANDROID_HOME` or `ANDROID_SDK_ROOT`.
