@@ -17,6 +17,8 @@ The current focus is:
 Priority:
 
 - Keep shake-triggered sharing understandable and user-confirmed
+- Keep an accessible manual share action available without requiring motion or
+  accelerometer registration
 - Preserve tested accelerometer threshold, finite-value, overflow, and debounce behavior
 - Ensure rejected sensor samples do not consume shake debounce state
 - Keep shake debounce timing based on monotonic sensor event time

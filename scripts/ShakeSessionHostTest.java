@@ -6,8 +6,8 @@ public final class ShakeSessionHostTest {
     public static void main(String[] args) {
         ShakeSessionHostTest test = new ShakeSessionHostTest();
         test.run();
-        if (test.cases != 9) {
-            throw new AssertionError("Expected 9 cases, ran " + test.cases);
+        if (test.cases != 12) {
+            throw new AssertionError("Expected 12 cases, ran " + test.cases);
         }
         System.out.println("Portable shake session tests passed: " + test.cases + " cases.");
     }
@@ -22,6 +22,9 @@ public final class ShakeSessionHostTest {
         acceptedShakeLocksShareLaunchAtomically();
         failedShareLaunchAllowsRetry();
         resumeClearsPreviousShareLock();
+        manualShareWorksWithoutSensorRegistration();
+        manualShareRespectsLifecycleAndDuplicateLock();
+        failedManualShareAllowsRetry();
     }
 
     private void rejectsCallbacksBeforeRegistrationCompletes() {
@@ -106,6 +109,34 @@ public final class ShakeSessionHostTest {
         active.session.completeRegistration(nextRegistration, true);
         expectTrue(active.session.onSensorSample(
                 nextRegistration, threshold(), 0f, 0f, 1200L));
+        cases++;
+    }
+
+    private void manualShareWorksWithoutSensorRegistration() {
+        ShakeSession session = new ShakeSession();
+        session.beginResume();
+
+        expectTrue(session.requestShare());
+        cases++;
+    }
+
+    private void manualShareRespectsLifecycleAndDuplicateLock() {
+        ShakeSession session = new ShakeSession();
+        expectFalse(session.requestShare());
+        session.beginResume();
+        expectTrue(session.requestShare());
+        expectFalse(session.requestShare());
+        session.pause();
+        expectFalse(session.requestShare());
+        cases++;
+    }
+
+    private void failedManualShareAllowsRetry() {
+        ShakeSession session = new ShakeSession();
+        session.beginResume();
+        expectTrue(session.requestShare());
+        session.shareLaunchFailed();
+        expectTrue(session.requestShare());
         cases++;
     }
 

@@ -10,6 +10,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.widget.Toast;
 
 import java.util.concurrent.TimeUnit;
@@ -64,6 +65,12 @@ public class ShakeActivity extends Activity {
                 event.values[1],
                 event.values[2],
                 eventTimeMillis)) {
+            showShareComposer();
+        }
+    }
+
+    public void onShareRequested(View view) {
+        if (shakeSession.requestShare()) {
             showShareComposer();
         }
     }

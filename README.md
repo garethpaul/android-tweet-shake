@@ -95,6 +95,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   implausibly large finite sensor values cannot trigger composition.
 - Missing shake sensor support shows generic unavailable feedback instead of
   failing silently.
+- An accessible manual share button completes the same user-confirmed chooser
+  flow without motion or successful accelerometer registration.
 - Failure to register the accelerometer listener is also surfaced to the user.
 - Each resume creates an identity token and a fresh main-looper listener.
   Queued accelerometer callbacks are ignored after the activity pauses and
@@ -103,6 +105,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Queued callbacks require current successful accelerometer registration
   ownership before shake detection runs, and the session acquires duplicate
   launch suppression before returning a successful shake.
+- Shake and accessible manual share requests use the same resumed-lifecycle and
+  duplicate-launch ownership state.
 - Sharesheet launch follows Android's launch-and-catch pattern without a
   package-visibility preflight and rejects duplicate sensor events while a
   chooser is already opening.

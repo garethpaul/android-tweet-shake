@@ -43,6 +43,14 @@ final class ShakeSession {
             return false;
         }
 
+        return requestShare();
+    }
+
+    boolean requestShare() {
+        if (currentRegistration == null || shareInProgress) {
+            return false;
+        }
+
         shareInProgress = true;
         return true;
     }

@@ -40,6 +40,7 @@ SHARE_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-13-share-security-exception-re
 REGISTRATION_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-14-shake-registration-ownership-guard.md"
 PORTABLE_DETECTOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-portable-shake-detector-tests.md"
 DEVICE_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md"
+MANUAL_SHARE_PLAN="$ROOT_DIR/docs/plans/2026-06-25-accessible-manual-share.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -83,6 +84,9 @@ for session_contract in \
   'acceptedShakeLocksShareLaunchAtomically' \
   'failedShareLaunchAllowsRetry' \
   'resumeClearsPreviousShareLock' \
+  'manualShareWorksWithoutSensorRegistration' \
+  'manualShareRespectsLifecycleAndDuplicateLock' \
+  'failedManualShareAllowsRetry' \
   'Portable shake session tests passed:'; do
   if ! grep -Fq "$session_contract" "$SHAKE_SESSION_HOST_TEST"; then
     printf '%s\n' "Portable shake session coverage is missing: $session_contract" >&2
@@ -134,8 +138,8 @@ if ! grep -Fq 'if (test.cases != 13)' "$SHAKE_HOST_TEST"; then
   printf '%s\n' "Portable shake detector runner must require all thirteen cases." >&2
   exit 1
 fi
-if ! grep -Fq 'if (test.cases != 9)' "$SHAKE_SESSION_HOST_TEST"; then
-  printf '%s\n' "Portable shake session runner must require all nine cases." >&2
+if ! grep -Fq 'if (test.cases != 12)' "$SHAKE_SESSION_HOST_TEST"; then
+  printf '%s\n' "Portable shake session runner must require all twelve cases." >&2
   exit 1
 fi
 if [ "$(grep -Fc "scripts/test-shake-detector.sh'" "$ROOT_DIR/Makefile")" -ne 1 ]; then
@@ -230,18 +234,18 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-979d6ed34ea779c06f50d5efc9e8131d6d64fa993534733836c7e32b71c8101d  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+5ea5502beb4b3196cc445a0f0e1c7ffd9fd0ce329a0af94555f62a5da8fad5d4  app/src/main/java/gpj/tweetshake/ShakeActivity.java
 4a55c086ac9e0b028fb3b32390a5235cb81ba7e5b4b6fbbcd652a20e23fcda97  app/src/main/java/gpj/tweetshake/ShakeDetector.java
-78683f9a3227e0771cae154c326c1a4abd0f73b55c143e644d36af2c02fd14e2  app/src/main/java/gpj/tweetshake/ShakeSession.java
+722bdbbc1430863444bc368ba74f0b4d4ca863aff55da7448ad2db4b61ffa353  app/src/main/java/gpj/tweetshake/ShakeSession.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
-90bf617d42708937a9d8db2e3de002b1b5dbee8411482897b23523d849117db1  app/src/main/res/layout/shake_main.xml
+3ebdb385c65aebcf221b5fbd4446d2782daffc02f434c30ee9c81c10cd59e6a2  app/src/main/res/layout/shake_main.xml
 820e323f5506dc1dda3fad164e5fa0acd56a8266e4ea441db94e60fd9972d28a  app/src/main/res/mipmap-hdpi/ic_launcher.png
 90f5bc4bf1364152b1943933b6910bafc913e7a813de5c1b0ba4723e33e58975  app/src/main/res/mipmap-mdpi/ic_launcher.png
 552f9a01050827cc24c9bf50569fe8b0a121fb93297106e224986e7a4e9cc747  app/src/main/res/mipmap-xhdpi/ic_launcher.png
 c6e7620e6c5d9bf8020f7216117d8cb799f7936f232e28732443b1fe79521d6c  app/src/main/res/mipmap-xxhdpi/ic_launcher.png
 24ae0c6e407500210f38b31fc40dedc9105b66b0543ef920e485fca20f7c5990  app/src/main/res/values-v21/styles.xml
 7b12b0133d18e5e90fa63f123c78437e1a6599510865b658cecfe545faa59e98  app/src/main/res/values/colors.xml
-ec06db62c6c767a44e49c767a19592e37c8a71ef076ee0780bb0410136f089d3  app/src/main/res/values/strings.xml
+bf0babc139d4dd46b34be89a6050125f496ef7c11c5d70e1183d91c2c494cb9c  app/src/main/res/values/strings.xml
 2eeed855c9cc5993950b4722f90d32df4724d55a7e2e2470edbaa801c976805f  app/src/main/res/values/styles.xml
 EOF
 actual_app_inventory=$(cd "$ROOT_DIR" && find app/src/main -type f -print | LC_ALL=C sort | xargs sha256sum)
@@ -365,6 +369,8 @@ for manifest_contract in \
 done
 
 for share_contract in \
+  "public void onShareRequested(View view)" \
+  "if (shakeSession.requestShare())" \
   "private void showShareComposer()" \
   "if (isFinishing() || isDestroyed())" \
   "new Intent(Intent.ACTION_SEND)" \
@@ -574,6 +580,11 @@ fi
 
 for resource_contract in \
   'android:text="@string/shake_to_tweet_title"' \
+  'android:text="@string/share_now"' \
+  'android:onClick="onShareRequested"' \
+  'android:layout_alignParentBottom="true"' \
+  'android:layout_above="@id/shareButton"' \
+  'android:scaleType="centerInside"' \
   'android:contentDescription="@string/tweet_shake_logo_description"'; do
   if ! grep -Fq "$resource_contract" "$SHAKE_LAYOUT"; then
     printf '%s\n' "Missing layout resource contract: $resource_contract" >&2
@@ -583,6 +594,7 @@ done
 
 for string_contract in \
   'name="shake_sensor_unavailable"' \
+  'name="share_now"' \
   'name="share_chooser_title"' \
   'name="share_text"' \
   'name="share_unavailable"'; do
@@ -667,6 +679,24 @@ fi
 if ! grep -Fq "canonical GitHub Actions workflow installs Android API 22" "$README" || \
    ! grep -Fq "2026-06-12-hosted-android-verification.md" "$README"; then
   printf '%s\n' "README must document the hosted Android gate and plan." >&2
+  exit 1
+fi
+
+for manual_share_doc in "$README" "$SECURITY" "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "accessible manual share" "$manual_share_doc"; then
+    printf '%s\n' "$manual_share_doc must document the accessible manual share action." >&2
+    exit 1
+  fi
+done
+if [ ! -f "$MANUAL_SHARE_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$MANUAL_SHARE_PLAN" || \
+   ! grep -Fq "/usr/bin/make check" "$MANUAL_SHARE_PLAN" || \
+   ! grep -Fq "Android accessibility" "$MANUAL_SHARE_PLAN"; then
+  printf '%s\n' "Accessible manual share plan must record completed design and verification." >&2
+  exit 1
+fi
+if ! grep -Fq "Manual share without accelerometer" "$ROOT_DIR/DEVICE_VERIFICATION.md"; then
+  printf '%s\n' "Device verification must cover the manual share fallback." >&2
   exit 1
 fi
 

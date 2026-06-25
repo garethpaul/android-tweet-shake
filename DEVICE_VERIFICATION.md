@@ -36,6 +36,8 @@ transferred to a different detector implementation.
 | Scenario | Expected evidence | Result | Evidence |
 | --- | --- | --- | --- |
 | Accelerometer unavailable | The activity remains usable and shows generic unavailable feedback without crashing. | `not run` | `not run` |
+| Manual share without accelerometer | The visible Share now button opens exactly one user-confirmed chooser while sensor support is unavailable. | `not run` | `not run` |
+| Manual share in landscape | The Share now button remains fully visible and the logo scales inside the remaining space on a short landscape display. | `not run` | `not run` |
 | Listener registration failure | Failed registration prevents ownership and shows generic unavailable feedback. | `not run` | `not run` |
 | Below-threshold motion | Ordinary movement does not open the chooser or consume accepted-shake state. | `not run` | `not run` |
 | Threshold shake | A qualifying physical shake opens exactly one user-confirmed ACTION_SEND chooser. | `not run` | `not run` |

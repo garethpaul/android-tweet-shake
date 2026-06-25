@@ -1,5 +1,13 @@
 # Android Tweet Shake Changes
 
+## 2026-06-25
+
+- Added an accessible manual share button that uses the same resumed-lifecycle,
+  duplicate-launch, chooser, and launch-failure recovery state as shakes.
+- Kept sharing available when accelerometer hardware or registration is unavailable.
+- Kept the manual share button visible in short landscape layouts by scaling
+  the logo inside the space between the title and bottom-anchored action.
+
 ## 2026-06-21
 
 - Bound hosted and contributor verification to `/usr/bin/make` and added an
