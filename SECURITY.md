@@ -40,6 +40,8 @@ Helpful reports include:
 - Sensor callbacks require current successful accelerometer registration and a
   per-resume identity token before launching a chooser. Listener delivery is
   bound to the main looper, and pause invalidates ownership before teardown.
+- The accessible manual share action uses the same resumed-lifecycle and
+  duplicate-launch lock without bypassing the user-confirmed chooser.
 - The exported launcher ignores inbound intent extras. Outgoing share text is a
   fixed, byte-pinned application resource rather than caller-controlled data.
 - Hosted checkout credentials are not persisted. CODEOWNERS covers the whole

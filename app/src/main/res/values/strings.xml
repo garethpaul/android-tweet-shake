@@ -3,6 +3,7 @@
     <string name="shake_to_tweet_title">Shake to share</string>
     <string name="tweet_shake_logo_description">TweetShake logo</string>
     <string name="shake_sensor_unavailable">Shake sensor is unavailable.</string>
+    <string name="share_now">Share now</string>
     <string name="share_chooser_title">Share your shake</string>
     <string name="share_text">I just shook my phone</string>
     <string name="share_unavailable">No sharing app is available.</string>
