@@ -41,6 +41,7 @@ REGISTRATION_OWNERSHIP_PLAN="$ROOT_DIR/docs/plans/2026-06-14-shake-registration-
 PORTABLE_DETECTOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-portable-shake-detector-tests.md"
 DEVICE_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-android-tweet-shake-device-verification-checklist.md"
 MANUAL_SHARE_PLAN="$ROOT_DIR/docs/plans/2026-06-25-accessible-manual-share.md"
+REGISTRATION_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-25-sensor-registration-security-recovery.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
 trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
 
@@ -234,7 +235,7 @@ fi
 
 cat > "$EXPECTED_FILE" <<'EOF'
 a6ad0975f40ef1d7ece2d2889b5533689695d815407bd177012d9083bcac310e  app/src/main/AndroidManifest.xml
-5ea5502beb4b3196cc445a0f0e1c7ffd9fd0ce329a0af94555f62a5da8fad5d4  app/src/main/java/gpj/tweetshake/ShakeActivity.java
+59aa5d64f64727fa0699d5b620d20d0cf19792482d852ad6651e4804674cb282  app/src/main/java/gpj/tweetshake/ShakeActivity.java
 4a55c086ac9e0b028fb3b32390a5235cb81ba7e5b4b6fbbcd652a20e23fcda97  app/src/main/java/gpj/tweetshake/ShakeDetector.java
 722bdbbc1430863444bc368ba74f0b4d4ca863aff55da7448ad2db4b61ffa353  app/src/main/java/gpj/tweetshake/ShakeSession.java
 6f1229c3150be8c5e2535c7df9ae8f9492a57f0a7299bd5615aca6af88175d76  app/src/main/res/drawable-nodpi/logo.png
@@ -452,6 +453,27 @@ done
 ON_RESUME=$(sed -n '/protected void onResume()/,/protected void onPause()/p' "$SHAKE_ACTIVITY")
 ON_PAUSE=$(sed -n '/protected void onPause()/,/^    }/p' "$SHAKE_ACTIVITY")
 
+if ! printf '%s\n' "$ON_RESUME" | grep -Fq 'catch (SecurityException exception)' || \
+   ! printf '%s\n' "$ON_RESUME" | grep -Fq 'registered = false;' || \
+   printf '%s\n' "$ON_RESUME" | grep -Eq 'catch \((RuntimeException|Exception|Throwable|[[:alnum:]_.$]*Error)([[:space:]]|\))'; then
+  printf '%s\n' "Accelerometer registration must recover narrowly from platform security rejection." >&2
+  exit 1
+fi
+if [ ! -f "$REGISTRATION_SECURITY_PLAN" ] || \
+   ! grep -Fq "Status: Completed" "$REGISTRATION_SECURITY_PLAN" || \
+   ! grep -Fq "/usr/bin/make check" "$REGISTRATION_SECURITY_PLAN" || \
+   ! grep -Fq "hostile mutations" "$REGISTRATION_SECURITY_PLAN"; then
+  printf '%s\n' "Sensor registration security-recovery plan must record completed verification." >&2
+  exit 1
+fi
+for registration_security_doc in "$ROOT_DIR/AGENTS.md" "$README" "$SECURITY" \
+  "$ROOT_DIR/VISION.md" "$ROOT_DIR/CHANGES.md"; do
+  if ! grep -Fq "sensor registration security rejection" "$registration_security_doc"; then
+    printf '%s\n' "$registration_security_doc must document sensor registration security rejection." >&2
+    exit 1
+  fi
+done
+
 for ownership_contract in \
   'static final class Registration' \
   'currentRegistration = new Registration()' \
@@ -489,10 +511,39 @@ done
 
 RESUME_SUPER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "super.onResume();" | cut -d: -f1)
 RESUME_SESSION_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "shakeSession.beginResume();" | cut -d: -f1)
-RESUME_REGISTER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "boolean registered = sensorManager.registerListener(" | cut -d: -f1)
+RESUME_TRY_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "try {" | cut -d: -f1)
+RESUME_REGISTER_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "registered = sensorManager.registerListener(" | cut -d: -f1)
+RESUME_CATCH_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "catch (SecurityException exception)" | cut -d: -f1)
+RESUME_COMPLETE_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "shakeSession.completeRegistration(registration, registered);" | cut -d: -f1)
+RESUME_FAILED_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "if (!registered)" | cut -d: -f1)
+RESUME_CLEAR_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "sensorListener = null;" | cut -d: -f1)
+RESUME_FEEDBACK_LINE=$(printf '%s\n' "$ON_RESUME" | grep -nF "showSensorUnavailable();" | cut -d: -f1)
+for resume_line in \
+  "$RESUME_SUPER_LINE" \
+  "$RESUME_SESSION_LINE" \
+  "$RESUME_TRY_LINE" \
+  "$RESUME_REGISTER_LINE" \
+  "$RESUME_CATCH_LINE" \
+  "$RESUME_COMPLETE_LINE" \
+  "$RESUME_FAILED_LINE" \
+  "$RESUME_CLEAR_LINE" \
+  "$RESUME_FEEDBACK_LINE"; do
+  case $resume_line in
+    ''|*[!0-9]*)
+      printf '%s\n' "Shake activity resume ownership markers must all be present and unambiguous." >&2
+      exit 1
+      ;;
+  esac
+done
 if [ "$RESUME_SUPER_LINE" -ge "$RESUME_SESSION_LINE" ] || \
-   [ "$RESUME_SESSION_LINE" -ge "$RESUME_REGISTER_LINE" ]; then
-  printf '%s\n' "Shake activity must establish a fresh token before listener registration." >&2
+   [ "$RESUME_SESSION_LINE" -ge "$RESUME_TRY_LINE" ] || \
+   [ "$RESUME_TRY_LINE" -ge "$RESUME_REGISTER_LINE" ] || \
+   [ "$RESUME_REGISTER_LINE" -ge "$RESUME_CATCH_LINE" ] || \
+   [ "$RESUME_CATCH_LINE" -ge "$RESUME_COMPLETE_LINE" ] || \
+   [ "$RESUME_COMPLETE_LINE" -ge "$RESUME_FAILED_LINE" ] || \
+   [ "$RESUME_FAILED_LINE" -ge "$RESUME_CLEAR_LINE" ] || \
+   [ "$RESUME_CLEAR_LINE" -ge "$RESUME_FEEDBACK_LINE" ]; then
+  printf '%s\n' "Shake activity must establish a fresh token, recover registration, then complete ownership." >&2
   exit 1
 fi
 

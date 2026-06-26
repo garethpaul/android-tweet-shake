@@ -1,5 +1,60 @@
 # Android Tweet Shake Changes
 
+## 2026-06-25 23:54 - P1 - Recover sensor registration security rejection
+
+### Summary
+
+Routed platform `SecurityException` from accelerometer listener registration
+through the existing failed-ownership and generic unavailable-feedback path
+instead of crashing the activity.
+
+### Work completed
+
+- Added a test-first SDK-free contract for the narrow registration catch.
+- Preserved the existing boolean failure path, per-resume identity, manual share
+  availability, and listener cleanup behavior.
+- Updated the byte-exact production source inventory and documented the boundary.
+
+### Threads
+
+- Started: sensor registration security recovery — direct implementation.
+- Continued: continuous open-source maintenance loop.
+- Stopped: none.
+
+### Files changed
+
+- `app/src/main/java/gpj/tweetshake/ShakeActivity.java` — narrow registration recovery.
+- `scripts/check-baseline.sh` — source, plan, docs, and audited hash contract.
+- `AGENTS.md`, `README.md`, `SECURITY.md`, `VISION.md` — maintained boundary.
+- `docs/plans/2026-06-25-sensor-registration-security-recovery.md` — completed plan.
+- `CHANGES.md` — this cycle record.
+
+### Validation
+
+- Red SDK-free baseline — failed before the activity catch was added.
+- Portable detector/session tests — 13 detector and 12 session cases passed.
+- `/usr/bin/make check` — Make authority, baseline, and portable suites passed;
+  local Gradle lint/tests/build skipped because no Android SDK is configured.
+- Six isolated source mutations with refreshed audited hashes — all rejected
+  without shell numeric warnings.
+- `git diff --check` — passed.
+- Hosted Android and CodeQL gates pending.
+
+### Bugs / findings
+
+- P1: A platform sensor registration security rejection bypassed failed
+  ownership and generic feedback, terminating the activity.
+
+### Blockers
+
+- Device reproduction remains intentionally unclaimed; the exact-commit matrix
+  keeps registration-rejection runtime evidence as `not run`.
+
+### Next action
+
+- Run the full portable gate and hostile mutations, then require hosted Android
+  and CodeQL checks before exact-head review and merge.
+
 ## 2026-06-25
 
 - Added an accessible manual share button that uses the same resumed-lifecycle,

@@ -40,6 +40,8 @@ Helpful reports include:
 - Sensor callbacks require current successful accelerometer registration and a
   per-resume identity token before launching a chooser. Listener delivery is
   bound to the main looper, and pause invalidates ownership before teardown.
+- A sensor registration security rejection is converted to failed ownership and
+  generic unavailable feedback without retaining or displaying exception detail.
 - The accessible manual share action uses the same resumed-lifecycle and
   duplicate-launch lock without bypassing the user-confirmed chooser.
 - The exported launcher ignores inbound intent extras. Outgoing share text is a

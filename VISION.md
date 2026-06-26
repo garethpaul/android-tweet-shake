@@ -24,6 +24,8 @@ Priority:
 - Keep shake debounce timing based on monotonic sensor event time
 - Keep debounce timestamp boundaries overflow-safe and non-consuming
 - Keep missing sensors and listener registration failures visible to the user
+- Keep sensor registration security rejection on the same failed-ownership and
+  generic-feedback path without broad exception handling
 - Reject stale listener generations across pause and later resume boundaries
 - Keep sensor callbacks on the main looper and acquire share suppression atomically
 - Guard sharesheet launch failures and duplicate chooser launches without
