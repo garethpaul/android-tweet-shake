@@ -56,6 +56,8 @@
 - The retired Twitter/Fabric SDK, credential fields, login activity, direct network permission, and package-specific composer must not be restored.
 - Shakes open a user-confirmed Android `ACTION_SEND` chooser without querying or forcing a destination package.
 - Preserve duplicate-launch suppression, generic unavailable feedback, and lifecycle-safe accelerometer registration and cleanup.
+- A sensor registration security rejection must complete registration as failed,
+  clear listener ownership, and reuse generic unavailable feedback.
 - Missing activities and permission-rejected chooser launches must clear
   duplicate-launch suppression and show the same generic unavailable feedback.
 - Queued accelerometer callbacks must be ignored unless the activity is resumed;

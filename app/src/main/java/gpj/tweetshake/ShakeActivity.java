@@ -118,11 +118,16 @@ public class ShakeActivity extends Activity {
 
         SensorEventListener listener = createSensorListener(registration);
         sensorListener = listener;
-        boolean registered = sensorManager.registerListener(
-                listener,
-                accelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL,
-                mainHandler);
+        boolean registered;
+        try {
+            registered = sensorManager.registerListener(
+                    listener,
+                    accelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL,
+                    mainHandler);
+        } catch (SecurityException exception) {
+            registered = false;
+        }
         shakeSession.completeRegistration(registration, registered);
         if (!registered) {
             sensorListener = null;

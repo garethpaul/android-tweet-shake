@@ -160,6 +160,8 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   clean, pins compatible legacy build tooling, and removes generated IDE metadata
   from version control. Missing accelerometer support, listener
   registration failure, and sharesheet launch failure surface generic messages.
+- A sensor registration security rejection follows the same failed-registration
+  ownership and generic unavailable-feedback path without exposing the exception.
 - Portable lifecycle/session tests verify failed and stale registrations,
   pause/resume token invalidation, atomic duplicate suppression, and retry after
   permission-rejected or missing-activity launch failures.
@@ -194,6 +196,8 @@ When the required SDK or runtime is unavailable locally, use static checks and s
   for the device evidence matrix and runtime non-claims.
 - See `docs/plans/2026-06-19-android-tweet-shake-deep-review.md` for the
   cumulative PR review, fixes, executable proof, and remaining device risks.
+- See `docs/plans/2026-06-25-sensor-registration-security-recovery.md` for the
+  narrow platform registration-rejection recovery contract.
 
 Earlier login and credential plans remain in `docs/plans/` as historical
 context for the retired integration.
