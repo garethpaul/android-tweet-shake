@@ -43,7 +43,8 @@ DEVICE_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-android-tweet-shake-de
 MANUAL_SHARE_PLAN="$ROOT_DIR/docs/plans/2026-06-25-accessible-manual-share.md"
 REGISTRATION_SECURITY_PLAN="$ROOT_DIR/docs/plans/2026-06-25-sensor-registration-security-recovery.md"
 EXPECTED_FILE=$(mktemp "${TMPDIR:-/tmp}/android-tweet-shake-expected.XXXXXX")
-trap 'rm -f "$EXPECTED_FILE"' EXIT HUP INT TERM
+DISPATCH_TEMP=$(mktemp -d "${TMPDIR:-/tmp}/android-tweet-shake-dispatch.XXXXXX")
+trap 'rm -f "$EXPECTED_FILE"; rm -rf "$DISPATCH_TEMP"' EXIT HUP INT TERM
 
 require_sha256() {
   file=$1
@@ -815,6 +816,60 @@ grep -Fq 'Status: Completed' "$ROOT_DIR/docs/plans/2026-06-21-android-tweet-shak
 grep -Fq 'later override-shell fake-zero boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the later override-shell boundary.' >&2; exit 1; }
 grep -Fq 'later double-colon append boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the later double-colon boundary.' >&2; exit 1; }
 grep -Fq 'startup parse-time boundary reproduction' "$ROOT_DIR/scripts/test-makefile-root.sh" || { printf '%s\n' 'Make authority harness must reproduce the startup parse-time boundary.' >&2; exit 1; }
+
+# The Make authority harness observes that `make check` dispatches the repository entrypoints, but it
+# cannot observe its own invocation: neutering the root-test recipe stops the harness -- and with it
+# every check inside it -- without changing a single byte the greps above look at. The dispatch
+# observation for scripts/test-makefile-root.sh therefore has to be made from outside that harness.
+# Match the dispatch log whole-line: an '@echo'-prefixed or otherwise wrapped recipe still contains
+# the runner path as a substring, so a substring match cannot tell dispatch from a printed string.
+MAKE_BIN=${MAKE_BIN:-/usr/bin/make}
+DISPATCH_ROOT=$(CDPATH='' cd "$ROOT_DIR" && pwd -P)
+DISPATCH_SHELL="$DISPATCH_TEMP/fake-shell"
+DISPATCH_LOG="$DISPATCH_TEMP/dispatch.log"
+mkdir -p "$DISPATCH_TEMP/control dir" "$DISPATCH_TEMP/sdk dir"
+# 'fake-zero' is required, not decoration: the Makefile's own guards are $(shell ...) calls that run
+# under this target-specific SHELL, and an empty result makes their $(if ...) checks report failure.
+cat > "$DISPATCH_SHELL" <<'SCRIPT'
+#!/bin/sh
+printf '%s\n' "$*" >> "$ANDROID_TWEET_SHAKE_DISPATCH_LOG"
+printf '%s\n' fake-zero
+exit 0
+SCRIPT
+chmod +x "$DISPATCH_SHELL"
+DISPATCH_LATER="$DISPATCH_TEMP/later-dispatch.mk"
+printf 'build check lint root-test test verify: MAKEFILE_LIST := %s\n' "$ROOT_DIR/Makefile" > "$DISPATCH_LATER"
+printf 'build check lint root-test test verify: override SHELL := %s\n' "$DISPATCH_SHELL" >> "$DISPATCH_LATER"
+printf 'build check lint root-test test verify: override .SHELLFLAGS := -c\n' >> "$DISPATCH_LATER"
+: > "$DISPATCH_LOG"
+if ! (cd "$DISPATCH_TEMP/control dir" && env ANDROID_TWEET_SHAKE_DISPATCH_LOG="$DISPATCH_LOG" \
+    "$MAKE_BIN" --no-print-directory -f "$ROOT_DIR/Makefile" -f "$DISPATCH_LATER" \
+    "ANDROID_HOME=$DISPATCH_TEMP/sdk dir" "GRADLE=$DISPATCH_TEMP/gradle tool" check) \
+    > "$DISPATCH_TEMP/dispatch.out" 2>&1; then
+  printf '%s\n' 'Make check dispatch observation must run.' >&2
+  cat "$DISPATCH_TEMP/dispatch.out" >&2
+  exit 1
+fi
+DISPATCH_ROOT_LITERAL=$(printf '%s' "$DISPATCH_ROOT" | sed "s/'/'\"'\"'/g")
+for dispatched_runner in test-makefile-root.sh check-baseline.sh test-shake-detector.sh; do
+  if ! grep -Fxq -e "-c /bin/sh '$DISPATCH_ROOT_LITERAL/scripts/$dispatched_runner'" "$DISPATCH_LOG"; then
+    printf '%s\n' "Make check must dispatch scripts/$dispatched_runner as an unwrapped command." >&2
+    exit 1
+  fi
+done
+
+# A dispatch log proves the harness ran; it cannot prove the harness asserts anything. Every string
+# pinned from this file above appears only inside the harness's own closing success message, so a
+# shebang plus that one printf satisfies them all. Give the harness a Make that does nothing: a
+# harness that really asserts must fail, and a harness that only prints its success message cannot.
+NOOP_MAKE="$DISPATCH_TEMP/noop-make"
+printf '%s\n' '#!/bin/sh' 'exit 0' > "$NOOP_MAKE"
+chmod +x "$NOOP_MAKE"
+if MAKE_BIN="$NOOP_MAKE" /bin/sh "$ROOT_DIR/scripts/test-makefile-root.sh" \
+    > "$DISPATCH_TEMP/positive-control.out" 2>&1; then
+  printf '%s\n' 'Make authority harness must fail when the Make under test does nothing; it is not asserting.' >&2
+  exit 1
+fi
 grep -Fq 'Caller-supplied later makefiles, including target-specific override SHELL/.SHELLFLAGS assignments and double-colon public recipes, are outside the local Make trust boundary.' "$ROOT_DIR/README.md" || { printf '%s\n' 'README must document the caller-supplied Make boundary.' >&2; exit 1; }
 grep -Fq 'Documented caller-supplied later makefiles and startup parse-time Make code as outside the local Make trust boundary.' "$ROOT_DIR/CHANGES.md" || { printf '%s\n' 'CHANGES must record the truthful Make boundary.' >&2; exit 1; }
 grep -Fq 'Startup makefiles can run parse-time Make functions before the repository Makefile rejects them.' "$ROOT_DIR/docs/plans/2026-06-21-android-tweet-shake-system-make-boundary.md" || { printf '%s\n' 'Make authority plan must document the startup parse-time boundary.' >&2; exit 1; }
