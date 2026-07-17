@@ -114,9 +114,15 @@ printf 'build check lint root-test test verify: MAKEFILE_LIST := %s\n' "$MAKEFIL
 printf 'build check lint root-test test verify: override SHELL := %s\n' "$FAKE_SHELL" >> "$LATER_FAKE_SHELL"
 printf 'build check lint root-test test verify: override .SHELLFLAGS := -c\n' >> "$LATER_FAKE_SHELL"
 run_in_control_success "$TEMP_ROOT/later-fake-shell.out" env ANDROID_TWEET_SHAKE_COMMAND_LOG="$LOG" ANDROID_TWEET_SHAKE_FAKE_SHELL_LOG="$FAKE_SHELL_LOG" "$MAKE_BIN" --no-print-directory -f "$MAKEFILE" -f "$LATER_FAKE_SHELL" "ANDROID_HOME=$SDK" "GRADLE=$FAKE_GRADLE" check
-grep -Fq 'scripts/test-makefile-root.sh' "$FAKE_SHELL_LOG"
-grep -Fq 'scripts/check-baseline.sh' "$FAKE_SHELL_LOG"
-grep -Fq 'scripts/test-shake-detector.sh' "$FAKE_SHELL_LOG"
+# Match the dispatch log whole-line. A recipe that only prints its runner -- '@echo /bin/sh
+# .../check-baseline.sh' -- still logs the runner path as a substring under '.SHELLFLAGS := -c', so a
+# substring match reports a runner as dispatched when nothing ran. The '-e' is required: the pattern
+# begins with '-c' and grep would otherwise read it as an option.
+ROOT_LITERAL=$(printf '%s' "$ROOT" | /usr/bin/sed "s/'/'\"'\"'/g")
+for dispatched_runner in test-makefile-root.sh check-baseline.sh test-shake-detector.sh; do
+  grep -Fxq -e "-c /bin/sh '$ROOT_LITERAL/scripts/$dispatched_runner'" "$FAKE_SHELL_LOG" ||
+    fail "make check must dispatch scripts/$dispatched_runner as an unwrapped command."
+done
 grep -Fq 'fake-zero' "$TEMP_ROOT/later-fake-shell.out"
 
 run_in_control_failure "$TEMP_ROOT/flags.out" "$MAKE_BIN" --no-print-directory -f "$MAKEFILE" MAKEFLAGS=-n "GRADLE=$FAKE_GRADLE" build

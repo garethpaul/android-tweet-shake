@@ -1,5 +1,54 @@
 # Android Tweet Shake Changes
 
+## 2026-07-17 - P1 - Observe runner dispatch whole-line and prove the Make authority harness asserts
+
+### Summary
+
+Closed a verification gap in which `make check` passed while a repository test
+runner never executed. The Make authority harness observed dispatch of the three
+shell entrypoints with substring greps against its fake-shell log, so an
+`@echo`-prefixed recipe still logged the runner path and still matched; and no
+check observed dispatch of the harness itself, so deleting, `@echo`-prefixing or
+moving the `root-test` invocation stopped the harness and everything inside it
+while `make check` stayed green.
+
+### Work completed
+
+- Matched the fake-shell dispatch log whole-line in the Make authority harness,
+  so a recipe that only prints its runner no longer reports as dispatched.
+- Added a dispatch observation for `scripts/test-makefile-root.sh` to the
+  baseline checker, which is the one gate outside that harness able to see
+  whether the harness was invoked at all.
+- Added a positive control: the harness must fail when handed a Make that does
+  nothing. Every string the baseline checker pinned from the harness occurred
+  only inside the harness's own closing success message, so a shebang plus that
+  one `printf` satisfied all of them.
+
+### Threads
+
+- Started: unpinned runner execution audit — dispatch observation and controls.
+- Continued: continuous open-source maintenance loop.
+- Stopped: none.
+
+### Files changed
+
+- `scripts/test-makefile-root.sh` — whole-line dispatch log matching.
+- `scripts/check-baseline.sh` — harness dispatch observation and positive control.
+- `CHANGES.md` — this cycle record.
+
+### Validation
+
+- `/usr/bin/make check` — passed; output byte-identical to the pre-change run;
+  local Gradle lint/tests/build skipped because no Android SDK is configured.
+- Seven isolated hostile mutations — all rejected, each by a named assertion:
+  deleting, `@echo`-prefixing and moving the `root-test` invocation to an unused
+  target; `@echo`-prefixing the baseline-checker and portable-detector
+  invocations; and stubbing the harness with and without its success message.
+  All seven passed `make check` before this change.
+- Each added block removed in isolation — the matching mutation passed again,
+  confirming all three blocks are load-bearing.
+- Checkout paths containing a space and a single quote — passed.
+
 ## 2026-06-25 23:54 - P1 - Recover sensor registration security rejection
 
 ### Summary
